@@ -3,7 +3,7 @@ Dashboards for exported CSVs of Garmin R50 shot data.
 
 ## Getting Started
 
-## Prerequisites
+### Prerequisites
 
 Before getting started, ensure you have [Node.js](https://nodejs.org/) installed on your computer. This project uses `npm` (Node Package Manager), which comes bundled with Node.js.
 
@@ -15,36 +15,39 @@ npm -v
 
 If not installed, download and install it from [https://nodejs.org](https://nodejs.org).
 
-Once Node.js is installed, proceed with the steps below.
+---
 
-1. **Install dependencies**  
-   Run the following script in the project root to install both frontend and backend dependencies:
-   ```
-   npm run install:all
-   ```
+### 1. Install dependencies
 
-2. **Add Garmin CSV files**  
-   Place your exported Garmin R50 CSV files in the `/CSVs` directory.
+Run the following script in the project root to install both frontend and backend dependencies:
+```
+npm run install:all
+```
 
-   To export these files:
-   - Open a practice session in the Garmin Golf App.
-   - Tap the three dots in the upper right corner and select **Export to CSV**.
-   - Share the file to your computer via email or, if you’re using Apple devices, use AirDrop.
+---
 
-| Garmin App |
-|------------------------|
-| ![Export to CSV](https://i.imgur.com/xO769Bz.png) |
+### 2. Add Garmin CSV files
 
-   Notes:
-   - Files are ingested at server startup.
-   - Adding files after the server has started will not refresh session data automatically — a server restart is required (I'll eventually fix this).
-   - Sessions are currently ordered by filename. For basic ordering, use a naming convention like `YY-MM-DD.csv` (e.g., `24-09-15.csv`). This is a temporary approach and will eventually be replaced with a proper in-memory database.
+Place your exported Garmin R50 CSV files in the `/CSVs` directory.
 
-3. **Start the project**  
-   Use the following command to start both the backend and frontend:
-   ```
-   npm start
-   ```
+To export these files:
+- Open a practice session in the Garmin Golf App.
+- Tap the three dots in the upper right corner and select **Export to CSV**.
+- Share the file to your computer via email or, if you’re using Apple devices, use AirDrop.
+
+**Notes:**
+- Files are ingested at server startup.
+- Adding files after the server has started will not refresh session data automatically — a server restart is required (this will be addressed in a future update).
+- Sessions are currently ordered by filename. For basic ordering, use a naming convention like `YY-MM-DD.csv` (e.g., `24-09-15.csv`). This is a temporary approach and will eventually be replaced with a proper in-memory database.
+
+---
+
+### 3. Start the project
+
+Use the following command to start both the backend and frontend:
+```
+npm start
+```
 
 This will auto-launch:
 - The backend server on `http://localhost:3001`
@@ -82,6 +85,8 @@ The app provides multiple data visualization views for golf shot analysis:
 | ![](https://i.imgur.com/bqouKBJ.png) |
 | **Progression** |
 | ![](https://i.imgur.com/rM5qnMv.png) |
+| **Garmin App** |
+| ![Export to CSV](https://i.imgur.com/xO769Bz.png) |
 
 ## Acknowledgments
 
