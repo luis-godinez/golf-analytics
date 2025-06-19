@@ -59,9 +59,14 @@ The app provides multiple data visualization views for golf shot analysis:
 
 ## Screenshots
 
-Sessions             |  Overview          |  Progression
-:-------------------------:|:-------------------------:|:-------------------------:
-![](https://i.imgur.com/2E7kEh5.png)  |  ![](https://i.imgur.com/bqouKBJ.png) | ![](https://i.imgur.com/rM5qnMv.png)
+|   |
+|---|
+| **Sessions** |
+| ![](https://i.imgur.com/2E7kEh5.png) |
+| **Overview** |
+| ![](https://i.imgur.com/bqouKBJ.png) |
+| **Progression** |
+| ![](https://i.imgur.com/rM5qnMv.png) |
 
 ## Acknowledgments
 
