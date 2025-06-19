@@ -1,0 +1,22 @@
+{
+  "name": "golf-analytics",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:backend": "nodemon backend/index.js",
+    "start:frontend": "npm --prefix frontend start",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "nodemon": "^3.1.10"
+  },
+  "dependencies": {
+    "lowdb": "^7.0.1"
+  }
+}
