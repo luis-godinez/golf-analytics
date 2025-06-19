@@ -1,6 +1,21 @@
 Dashboards for exported CSVs of Garmin R50 shot data.
 
+
 ## Getting Started
+
+## Prerequisites
+
+Before getting started, ensure you have [Node.js](https://nodejs.org/) installed on your computer. This project uses `npm` (Node Package Manager), which comes bundled with Node.js.
+
+To check if you already have it installed, run:
+```
+node -v
+npm -v
+```
+
+If not installed, download and install it from [https://nodejs.org](https://nodejs.org).
+
+Once Node.js is installed, proceed with the steps below.
 
 1. **Install dependencies**  
    Run the following script in the project root to install both frontend and backend dependencies:
