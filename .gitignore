@@ -2,5 +2,6 @@
 backend/node_modules
 frontend/node_modules
 node_modules
-/CSV/*
-!/CSV/YY-MM-DD.csv
+/CSVs/*
+!/CSVs/YY-MM-DD.csv
+db.json
