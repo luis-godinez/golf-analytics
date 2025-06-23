@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
-import TableComponent from "../components/Table";
+import React, { useEffect, useState } from "react";
 import ScatterPlotComponent from "../components/ScatterPlot";
 import BoxPlotComponent from "../components/BoxPlot";
 import TrajectoriesSideViewComponent from "../components/TrajectoriesSideView";
 import TrajectoriesTopViewComponent from "../components/TrajectoriesTopView";
-import { CLUB_TYPE_ORDER, CLUB_TYPE_COLORS } from "../constants/clubTypes";
+import { CLUB_TYPE_ORDER } from "../constants/clubTypes";
 import DataFilter from "../components/DataFilter";
 
 interface OverviewProps {
