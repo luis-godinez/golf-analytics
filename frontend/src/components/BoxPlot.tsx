@@ -6,9 +6,10 @@ interface BoxPlotProps {
   data: any[];
   bounds: Record<string, { min: number; max: number }>;
   availableClubs: string[];
+  distanceType: "Carry" | "Total";
 }
 
-const BoxPlotComponent: React.FC<BoxPlotProps> = ({ data, bounds, availableClubs }) => {
+const BoxPlotComponent: React.FC<BoxPlotProps> = ({ data, bounds, availableClubs, distanceType }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -35,7 +36,7 @@ const BoxPlotComponent: React.FC<BoxPlotProps> = ({ data, bounds, availableClubs
 
     // Compute boxplot data
     const boxData = Array.from(grouped.entries()).map(([clubType, shots]) => {
-      const values = shots.map(d => +d["Carry Distance"]).sort(d3.ascending);
+      const values = shots.map(d => +d[`${distanceType} Distance`]).sort(d3.ascending);
       const q1 = d3.quantile(values, 0.25) ?? 0;
       const median = d3.quantile(values, 0.5) ?? 0;
       const q3 = d3.quantile(values, 0.75) ?? 0;
@@ -59,23 +60,29 @@ const BoxPlotComponent: React.FC<BoxPlotProps> = ({ data, bounds, availableClubs
       .range([0, height - margin.top - margin.bottom])
       .padding(0.3);
 
-    // Use global bounds for Carry Distance if available
-    const xMax = bounds["Carry Distance"]?.max ?? 200;
+    // Use global bounds for selected distance type if available
+    const xMax = bounds[`${distanceType} Distance`]?.max ?? 200;
     const x = d3.scaleLinear()
       .domain([0, xMax])
       .range([0, width - margin.left - margin.right]);
 
     g.append("g")
-      .call(d3.axisLeft(y));
+      .call(d3.axisLeft(y).tickSize(0))
+      .selectAll("text")
+      .attr("x", 6)
+      .attr("text-anchor", "start")
+      .attr("font-size", "12px")
+      .attr("font-weight", "bold")
+      .style("fill", d => CLUB_TYPE_COLORS[d as string] || "black");
 
-    // X-axis label (Carry Distance)
+    // X-axis label (dynamic distance type)
     svg.append("text")
       .attr("x", margin.left + (width - margin.left - margin.right) / 2)
       .attr("y", height - 15)
       .attr("text-anchor", "middle")
       .style("font-size", "12px")
       .style("font-weight", "bold")
-      .text("Yards");
+      .text(`${distanceType} Distance (Yards)`);
 
     g.append("g")
       .attr("transform", `translate(0,${height - margin.top - margin.bottom})`)
@@ -163,7 +170,7 @@ const BoxPlotComponent: React.FC<BoxPlotProps> = ({ data, bounds, availableClubs
         .style("font-size", `${fontSize}px`)
         .style("fill", "black");
     });
-  }, [data, dimensions, availableClubs, bounds]);
+  }, [data, dimensions, availableClubs, bounds, distanceType]);
 
   return (
     <div ref={wrapperRef} style={{ width: "100%", height: "50%" }}>

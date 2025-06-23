@@ -14,9 +14,10 @@ interface TrajectoriesTopViewProps {
   bounds: Record<string, { min: number; max: number }>;
   width?: number;
   height?: number;
+  distanceType: "Carry" | "Total";
 }
 
-const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data, visibleClubTypes, bounds, width = 700, height = 400 }) => {
+const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data, visibleClubTypes, bounds, width = 700, height = 400, distanceType }) => {
   const topView = useRef<SVGSVGElement | null>(null);
   const [containerWidth, setContainerWidth] = useState(width);
   const [containerHeight, setContainerHeight] = useState(height);
@@ -38,8 +39,8 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
 
   useEffect(() => {
     const parsedData: ShotData[] = data.map((d: any) => ({
-      totalDistance: parseFloat(d["Total Distance"]),
-      totalDeviationDistance: parseFloat(d["Total Deviation Distance"]),
+      totalDistance: parseFloat(d[distanceType + " Distance"]),
+      totalDeviationDistance: parseFloat(d[distanceType === "Carry" ? "Carry Deviation Distance" : "Total Deviation Distance"]),
       clubType: d["Club Type"]
     }));
     if (!parsedData.length) return;
@@ -50,7 +51,23 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
 
     const svg = d3.select(topView.current);
     svg.selectAll('*').remove();
-    const group = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+    svg.append("defs")
+      .append("clipPath")
+      .attr("id", "plot-area-clip")
+      .append("rect")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", w)
+      .attr("height", h);
+
+    // Outer group for axes (not clipped)
+    const plotGroup = svg.append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Inner group for visual content (clipped)
+    const clipGroup = plotGroup.append("g")
+      .attr("clip-path", "url(#plot-area-clip)");
 
     const maxAbsDeviation = bounds["Total Deviation Distance"]
       ? Math.max(Math.abs(bounds["Total Deviation Distance"].min), Math.abs(bounds["Total Deviation Distance"].max))
@@ -62,14 +79,14 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
     ];
     const yExtent: [number, number] = [
       0,
-      bounds["Total Distance"] ? bounds["Total Distance"].max : d3.max(parsedData, d => d.totalDistance) || 0
+      bounds[distanceType + " Distance"] ? bounds[distanceType + " Distance"].max : d3.max(parsedData, d => d.totalDistance) || 0
     ];
 
     const xScale = d3.scaleLinear().domain(xExtent).range([0, w]).nice();
     const yScale = d3.scaleLinear().domain(yExtent).range([h, 0]).nice();
 
-    // Add X-axis label
-    group.append('g')
+    // Add X-axis (not clipped)
+    plotGroup.append('g')
       .attr('transform', `translate(0,${h})`)
       .call(d3.axisBottom(xScale))
       .call(g => g.append('text')
@@ -78,10 +95,11 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
         .attr('fill', 'black')
         .attr('text-anchor', 'middle')
         .attr('font-weight', 'bold')
+        .style("font-size", "12px")
         .text('Deviation (Yards)'));
 
-    // Add Y-axis label
-    group.append('g')
+    // Add Y-axis (not clipped)
+    plotGroup.append('g')
       .call(d3.axisLeft(yScale).ticks(Math.ceil(yExtent[1] / 20)))
       .call(g => g.append('text')
         .attr('transform', 'rotate(-90)')
@@ -90,36 +108,63 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
         .attr('fill', 'black')
         .attr('text-anchor', 'middle')
         .attr('font-weight', 'bold')
-        .text('Total (Yards)'));
+        .style("font-size", "12px")
+        .text(`${distanceType} (Yards)`));
 
+    // Draw grid lines, circles, and trajectories inside clipGroup (clipped)
     const yTicks = yScale.ticks(Math.ceil(yExtent[1] / 20));
-    yTicks.forEach(tick => {
-      group.append('line')
-        .attr('x1', 0)
-        .attr('x2', w)
-        .attr('y1', yScale(tick))
-        .attr('y2', yScale(tick))
-        .attr('stroke', '#ddd')
-        .attr('stroke-width', 1)
-        .attr('stroke-dasharray', '2,2');
-    });
+    clipGroup.selectAll(".horizontal-grid")
+      .data(yTicks)
+      .enter()
+      .append("line")
+      .attr("class", "horizontal-grid")
+      .attr("x1", 0)
+      .attr("x2", w)
+      .attr("y1", yScale)
+      .attr("y2", yScale)
+      .attr("stroke", "#ccc")
+      .attr("stroke-width", 1)
+      .attr("stroke-opacity", 0.5);
 
     const maxYardage = yExtent[1];
     const circleSteps = Math.floor(maxYardage / 50);
     for (let i = 1; i <= circleSteps; i++) {
-      const radius = yScale(0) - yScale(i * 50);
-      group.append('circle')
+      const ringYards = i * 50;
+      const radius = yScale(0) - yScale(ringYards);
+      clipGroup.append('circle')
         .attr('cx', xScale(0))
         .attr('cy', yScale(0))
         .attr('r', radius)
-        .attr('stroke', '#ccc')
+        .attr('stroke', 'black')
         .attr('fill', 'none')
         .attr('stroke-dasharray', '4 2');
     }
 
+    // Add labels for concentric circles at every 50 yards (like ScatterPlot)
+    yScale.ticks().forEach((tick) => {
+      if (tick % 50 === 0 && tick !== 0) {
+        clipGroup.append("text")
+          .attr("x", w - 40)
+          .attr("y", yScale(tick) - 5)
+          .attr("fill", "#999")
+          .attr("font-size", 10)
+          .text(`${tick} yds`);
+      }
+    });
+
+    // Add vertical line at x = 0 (to match ScatterPlot)
+    clipGroup.append("line")
+      .attr("x1", xScale(0))
+      .attr("x2", xScale(0))
+      .attr("y1", 0)
+      .attr("y2", h)
+      .attr("stroke", "black")
+      .attr("stroke-width", 1)
+      .attr("stroke-opacity", 0.5);
+
     parsedData.forEach((d) => {
       if (!visibleClubTypes.includes(d.clubType)) return;
-      group.append('line')
+      clipGroup.append('line')
         .attr('x1', xScale(0))
         .attr('y1', yScale(0))
         .attr('x2', xScale(d.totalDeviationDistance))
@@ -128,7 +173,7 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
         .attr('stroke-width', 1.8);
     });
 
-  }, [data, containerWidth, containerHeight, visibleClubTypes, bounds]);
+  }, [data, containerWidth, containerHeight, visibleClubTypes, bounds, distanceType]);
 
   return (
     <svg

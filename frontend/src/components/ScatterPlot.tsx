@@ -14,20 +14,22 @@ interface ScatterPlotProps {
   data: any[];
   visibleClubTypes: string[];
   bounds: Record<string, { min: number; max: number }>;
+  distanceType: "Carry" | "Total";
 }
 
-const ScatterPlotComponent: React.FC<ScatterPlotProps> = ({ data, visibleClubTypes, bounds }) => {
-  const [yAxisField, setYAxisField] = React.useState<"Carry Distance" | "Total Distance">("Carry Distance");
+const ScatterPlotComponent: React.FC<ScatterPlotProps> = ({ data, visibleClubTypes, bounds, distanceType }) => {
+  const yAxisField = distanceType === "Carry" ? "Carry Distance" : "Total Distance";
   const scatterPlot = useRef<SVGSVGElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 800 });
 
+  // Determine which deviation distance to use for X based on yAxisField (distanceType)
   const grouped: Record<string, Point[]> = data.reduce((acc, shot) => {
     const type = shot["Club Type"];
     if (!type) return acc;
     if (!acc[type]) acc[type] = [];
     acc[type].push({
-      x: parseFloat(shot["Carry Deviation Distance"]),
+      x: parseFloat(shot[yAxisField === "Carry Distance" ? "Carry Deviation Distance" : "Total Deviation Distance"]),
       y: parseFloat(shot[yAxisField]),
       label: shot["﻿Date"]
     });
@@ -74,7 +76,8 @@ const ScatterPlotComponent: React.FC<ScatterPlotProps> = ({ data, visibleClubTyp
 
     const width = dimensions.width;
     const height = dimensions.height;
-    const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+    // Match margin to TrajectoriesTopView.tsx
+    const margin = { top: 40, right: 30, bottom: 70, left: 60 };
 
     const svg = d3.select(scatterPlot.current);
     svg.selectAll("*").remove();
@@ -82,39 +85,57 @@ const ScatterPlotComponent: React.FC<ScatterPlotProps> = ({ data, visibleClubTyp
     const contentWidth = width - margin.left - margin.right;
     const contentHeight = height - margin.top - margin.bottom;
 
+    svg.append("defs")
+      .append("clipPath")
+      .attr("id", "plot-area-clip")
+      .append("rect")
+      .attr("width", contentWidth)
+      .attr("height", contentHeight);
+
     const allPoints: Point[] = Object.values(grouped).flat();
 
     const deviationKey = yAxisField === "Carry Distance" ? "Carry Deviation Distance" : "Total Deviation Distance";
     const distanceKey = yAxisField;
 
-    const xAbsMax = bounds[deviationKey] ? Math.max(Math.abs(bounds[deviationKey].min), Math.abs(bounds[deviationKey].max)) : 50;
-    const yAbsMax = bounds[distanceKey] ? Math.max(Math.abs(bounds[distanceKey].min), Math.abs(bounds[distanceKey].max)) : 100;
+    // Align xAbsMax and yAbsMax logic with TrajectoriesTopView.tsx
+    const xAbsMax = bounds["Total Deviation Distance"]
+      ? Math.max(Math.abs(bounds["Total Deviation Distance"].min), Math.abs(bounds["Total Deviation Distance"].max))
+      : d3.max(allPoints, d => Math.abs(d.x)) || 0;
+
+    const yAbsMax = bounds[distanceKey]
+      ? bounds[distanceKey].max
+      : d3.max(allPoints, d => d.y) || 0;
 
     const xScale = d3.scaleLinear()
       .domain([-xAbsMax, xAbsMax])
-      .range([0, contentWidth]);
+      .range([0, contentWidth])
+      .nice();
 
     const yScale = d3.scaleLinear()
       .domain([0, yAbsMax])
-      .range([contentHeight, 0]);
+      .range([contentHeight, 0])
+      .nice();
 
     const maxY = yAbsMax;
     const radiusStep = 50;
 
-    const group = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    const plotGroup = svg.append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const clipGroup = plotGroup.append("g")
+      .attr("clip-path", "url(#plot-area-clip)");
 
     for (let r = radiusStep; r <= maxY; r += radiusStep) {
       const radius = yScale(0) - yScale(r);
-      group.append("circle")
+      clipGroup.append("circle")
         .attr("cx", xScale(0))
         .attr("cy", yScale(0))
         .attr("r", radius)
-        .style("fill", "none")
-        .style("stroke", "#ccc")
-        .style("stroke-dasharray", "2,2")
-        .style("stroke-opacity", 0.5);
+        .attr("stroke", "black")
+        .attr("fill", "none")
+        .attr("stroke-dasharray", "4 2");
 
-      group.append("text")
+      clipGroup.append("text")
         .attr("x", xScale(0))
         .attr("y", yScale(r) - 4)
         .attr("text-anchor", "middle")
@@ -123,58 +144,83 @@ const ScatterPlotComponent: React.FC<ScatterPlotProps> = ({ data, visibleClubTyp
         .text(`${r}`);
     }
 
-    group.append("g")
-      .attr("transform", `translate(0,${contentHeight})`)
+    // Add horizontal gridlines (match TrajectoriesTopView)
+    clipGroup.selectAll(".grid-line")
+      .data(yScale.ticks())
+      .enter()
+      .append("line")
+      .attr("class", "grid-line")
+      .attr("x1", 0)
+      .attr("x2", contentWidth)
+      .attr("y1", d => yScale(d))
+      .attr("y2", d => yScale(d))
+      .attr("stroke", "#ccc")
+      .attr("stroke-width", 1)
+      .attr("stroke-opacity", 0.5);
+
+    // Add vertical line at x = 0
+    clipGroup.append("line")
+      .attr("x1", xScale(0))
+      .attr("x2", xScale(0))
+      .attr("y1", 0)
+      .attr("y2", contentHeight)
+      .attr("stroke", "black")
+      .attr("stroke-width", 1)
+      .attr("stroke-opacity", 0.5);
+
+    plotGroup.append("g")
+      // Align X-axis with zero line of Y-axis
+      .attr("transform", `translate(0,${yScale(0)})`)
       .call(
         d3.axisBottom(xScale)
-          .ticks(10)
-          .tickSize(-contentHeight)
-          .tickFormat(d3.format("~s"))
-      )
-      .selectAll("line")
-      .style("stroke", "#ccc")
-      .style("stroke-opacity", 0.3);
+          .ticks(Math.ceil((xAbsMax * 2) / 10))
+          .tickFormat(d => `${d}`)
+      );
 
     // Add x-axis direction labels
-    group.append("text")
+    plotGroup.append("text")
       .attr("x", 10)
-      .attr("y", contentHeight - 10)
+      .attr("y", yScale(0) - 10)
       .attr("text-anchor", "start")
       .style("font-size", "12px")
       .style("fill", "#666")
       .text("Left");
 
-    group.append("text")
+    plotGroup.append("text")
       .attr("x", contentWidth - 10 )
-      .attr("y", contentHeight - 10)
+      .attr("y", yScale(0) - 10)
       .attr("text-anchor", "end")
       .style("font-size", "12px")
       .style("fill", "#666")
       .text("Right");
 
-    // Add X-axis label
-    group.append("text")
-      .attr("x", contentWidth/2)
-      .attr("y", contentHeight + 10)
-      .attr("dy", "1em")
-      .style("text-anchor", "middle")
+    // Add X-axis label (match style/offset to TrajectoriesTopView.tsx)
+    plotGroup.append("text")
+      .attr("x", contentWidth / 2)
+      .attr("y", yScale(0) + 50)
+      .attr("fill", "black")
+      .attr("text-anchor", "middle")
+      .attr("font-weight", "bold")
       .style("font-size", "12px")
-      .style("font-weight", "bold")
       .text("Deviation (Yards)");
 
-    group.append("g")
-      .call(d3.axisLeft(yScale).ticks(10));
+    plotGroup.append("g")
+      .call(
+        d3.axisLeft(yScale)
+          .ticks(Math.ceil(yAbsMax / 20))
+          .tickFormat(d => `${d}`)
+      );
 
     // Add Y-axis label
-    group.append("text")
+    plotGroup.append("text")
       .attr("transform", "rotate(-90)")
-      .attr("y", -margin.left + 5)
       .attr("x", -contentHeight / 2)
-      .attr("dy", "1em")
-      .style("text-anchor", "middle")
+      .attr("y", -45)
+      .attr("fill", "black")
+      .attr("text-anchor", "middle")
+      .attr("font-weight", "bold")
       .style("font-size", "12px")
-      .style("font-weight", "bold")
-      .text("Yards");
+      .text(`${yAxisField.replace(" Distance", "")} (Yards)`);
 
     Object.entries(grouped).forEach(([type, points]: [string, Point[]], index) => {
       if (!visibleClubTypes.includes(type)) return;
@@ -198,7 +244,7 @@ const ScatterPlotComponent: React.FC<ScatterPlotProps> = ({ data, visibleClubTyp
       if (isNaN(rx) || isNaN(ry)) return;
       const angle = Math.atan2(eigenVectors[1][0], eigenVectors[0][0]) * (180 / Math.PI);
 
-      group.append("ellipse")
+      clipGroup.append("ellipse")
         .attr("cx", xScale(meanX))
         .attr("cy", yScale(meanY))
         .attr("rx", Math.abs(xScale(meanX + rx) - xScale(meanX)) * 2)
@@ -210,7 +256,7 @@ const ScatterPlotComponent: React.FC<ScatterPlotProps> = ({ data, visibleClubTyp
         .style("stroke-width", 1.5)
         .style("pointer-events", "none");
 
-      group.selectAll(`.point-${index}`)
+      clipGroup.selectAll(`.point-${index}`)
         .data(points as Point[])
         .enter()
         .append("circle")
@@ -258,28 +304,6 @@ const ScatterPlotComponent: React.FC<ScatterPlotProps> = ({ data, visibleClubTyp
         overflow: "hidden"
       }}
     >
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.5rem", flex: '0 0 auto' }}>
-        <label style={{ marginRight: "1rem" }}>
-          <input
-            type="radio"
-            name="yAxisField"
-            value="Carry Distance"
-            checked={yAxisField === "Carry Distance"}
-            onChange={() => setYAxisField("Carry Distance")}
-          />
-          Carry Distance
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="yAxisField"
-            value="Total Distance"
-            checked={yAxisField === "Total Distance"}
-            onChange={() => setYAxisField("Total Distance")}
-          />
-          Total Distance
-        </label>
-      </div>
       <div style={{ flex: '1 1 0%', overflow: "hidden" }}>
         <svg
           ref={scatterPlot}

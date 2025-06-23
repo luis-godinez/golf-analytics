@@ -97,7 +97,8 @@ const TrajectoriesSideViewComponent: React.FC<TrajectoriesSideViewProps> = ({ da
         .attr('fill', 'black')
         .attr('text-anchor', 'middle')
         .attr('font-weight', 'bold')
-        .text('(Yards)'));
+        .attr('font-size', '12px')
+        .text('Carry + Roll (Yards)'));
 
     group.append('g')
       .call(yAxis)
@@ -108,6 +109,7 @@ const TrajectoriesSideViewComponent: React.FC<TrajectoriesSideViewProps> = ({ da
         .attr('fill', 'black')
         .attr('text-anchor', 'middle')
         .attr('font-weight', 'bold')
+        .attr('font-size', '12px')
         .text('Height (Meters)'));
 
     // Unique club types for coloring

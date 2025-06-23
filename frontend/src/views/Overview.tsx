@@ -17,6 +17,7 @@ const Overview: React.FC<OverviewProps> = ({ data, selectedDeviceType, units, fi
   const [visibleClubTypes, setVisibleClubTypes] = useState<string[]>([]);
   const [availableClubTypes, setAvailableClubTypes] = useState<string[]>([]);
   const [bounds, setBounds] = useState<Record<string, { min: number; max: number }>>({});
+  const [distanceType, setDistanceType] = useState<"Carry" | "Total">("Carry");
 
   useEffect(() => {
     setVisibleClubTypes(CLUB_TYPE_ORDER);
@@ -36,61 +37,110 @@ const Overview: React.FC<OverviewProps> = ({ data, selectedDeviceType, units, fi
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       <div style={{ display: "flex", justifyContent: "center", margin: "0.5rem 0", flexWrap: "wrap", gap: "0.5rem" }}>
-        {(() => {
-          const allVisible = visibleClubTypes.length === availableClubTypes.length;
-          return (
-            <>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.25rem 0.25rem",
+              backgroundColor: "#f5f5f5",
+              borderRadius: "999px",
+              border: "1px solid black",
+            }}
+          >
+            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#666" }}>Distance:</span>
+            {(["Carry", "Total"] as const).map((type) => (
               <span
-                onClick={() => {
-                  setVisibleClubTypes(allVisible ? [] : availableClubTypes);
-                }}
+                key={type}
+                onClick={() => setDistanceType(type)}
                 style={{
                   padding: "4px 10px",
                   borderRadius: "999px",
-                  backgroundColor: allVisible ? "#00000020" : "#eee",
-                  color: allVisible ? "#000" : "#999",
+                  backgroundColor: distanceType === type ? "#00000020" : "#eee",
+                  color: distanceType === type ? "#000" : "#999",
                   fontWeight: 600,
                   fontSize: "0.85rem",
-                  border: `1px solid ${allVisible ? "#000" : "#ccc"}`,
+                  border: `1px solid ${distanceType === type ? "#000" : "#ccc"}`,
                   userSelect: "none",
                   cursor: "pointer",
                   opacity: 1
                 }}
               >
-                All/None
+                {type}
               </span>
-              {[...CLUB_TYPE_ORDER].filter(club => availableClubTypes.includes(club)).map((club) => {
-                const color = CLUB_TYPE_COLORS[club];
-                return (
+            ))}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.25rem 0.25rem",
+              backgroundColor: "#f5f5f5",
+              border: "1px solid black",
+              borderRadius: "999px",
+              flexWrap: "wrap"
+            }}
+          >
+            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#666" }}>Clubs:</span>
+            {(() => {
+              const allVisible = visibleClubTypes.length === availableClubTypes.length;
+              return (
+                <>
                   <span
-                    key={club}
                     onClick={() => {
-                      setVisibleClubTypes(prev =>
-                        prev.includes(club)
-                          ? prev.filter(c => c !== club)
-                          : [...prev, club]
-                      );
+                      setVisibleClubTypes(allVisible ? [] : availableClubTypes);
                     }}
                     style={{
                       padding: "4px 10px",
                       borderRadius: "999px",
-                      backgroundColor: visibleClubTypes.includes(club) ? `${color}20` : "#eee",
-                      color: visibleClubTypes.includes(club) ? color : "#999",
+                      backgroundColor: allVisible ? "#00000020" : "#eee",
+                      color: allVisible ? "#000" : "#999",
                       fontWeight: 600,
                       fontSize: "0.85rem",
-                      border: `1px solid ${visibleClubTypes.includes(club) ? color : "#ccc"}`,
+                      border: `1px solid ${allVisible ? "#000" : "#ccc"}`,
                       userSelect: "none",
                       cursor: "pointer",
-                      opacity: visibleClubTypes.includes(club) ? 1 : 0.5
+                      opacity: 1
                     }}
                   >
-                    {club}
+                    All/None
                   </span>
-                );
-              })}
-            </>
-          );
-        })()}
+                  {[...CLUB_TYPE_ORDER].filter(club => availableClubTypes.includes(club)).map((club) => {
+                    const color = CLUB_TYPE_COLORS[club];
+                    return (
+                      <span
+                        key={club}
+                        onClick={() => {
+                          setVisibleClubTypes(prev =>
+                            prev.includes(club)
+                              ? prev.filter(c => c !== club)
+                              : [...prev, club]
+                          );
+                        }}
+                        style={{
+                          padding: "4px 10px",
+                          borderRadius: "999px",
+                          backgroundColor: visibleClubTypes.includes(club) ? `${color}20` : "#eee",
+                          color: visibleClubTypes.includes(club) ? color : "#999",
+                          fontWeight: 600,
+                          fontSize: "0.85rem",
+                          border: `1px solid ${visibleClubTypes.includes(club) ? color : "#ccc"}`,
+                          userSelect: "none",
+                          cursor: "pointer",
+                          opacity: visibleClubTypes.includes(club) ? 1 : 0.5
+                        }}
+                      >
+                        {club}
+                      </span>
+                    );
+                  })}
+                </>
+              );
+            })()}
+          </div>
+        </div>
       </div>
       <div
         style={{
@@ -103,13 +153,13 @@ const Overview: React.FC<OverviewProps> = ({ data, selectedDeviceType, units, fi
         }}
       >
         <div style={{ width: '30vw' }}>
-        <TrajectoriesTopViewComponent data={data} visibleClubTypes={visibleClubTypes} bounds={bounds} />
+        <TrajectoriesTopViewComponent data={data} visibleClubTypes={visibleClubTypes} bounds={bounds} distanceType={distanceType} />
         </div>
         <div style={{ width: '30vw'}}>
-          <ScatterPlotComponent data={data} visibleClubTypes={visibleClubTypes} bounds={bounds} />
+          <ScatterPlotComponent data={data} visibleClubTypes={visibleClubTypes} bounds={bounds} distanceType={distanceType} />
         </div>
         <div style={{ width: '40vw'}}>
-          <BoxPlotComponent data={data} bounds={bounds} availableClubs={availableClubTypes} />
+          <BoxPlotComponent data={data} bounds={bounds} availableClubs={availableClubTypes} distanceType={distanceType}/>
           <TrajectoriesSideViewComponent data={data} visibleClubTypes={visibleClubTypes} bounds={bounds} />
         </div>
       </div>
