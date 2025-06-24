@@ -14,6 +14,10 @@ app.use(express.json());
 app.use("/sessions", sessionsRouter);
 
 (async () => {
+  const dbPath = path.join(process.cwd(), "db.json");
+  if (fs.existsSync(dbPath)) {
+    fs.unlinkSync(dbPath);
+  }
   await initDB();
   const csvDir = path.join(process.cwd(), "CSVs");
   const filenames = fs.readdirSync(csvDir).filter(file => file.endsWith(".csv"));
