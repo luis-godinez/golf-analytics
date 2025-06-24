@@ -32,8 +32,9 @@ router.get("/bounds", async (req, res) => {
 
 router.get("/progression-summary", async (req, res) => {
   const metric = req.query.metric;
+  const clubs = req.query.clubs?.split(",") ?? [];
   try {
-    const result = await computeProgressionSummary(metric);
+    const result = await computeProgressionSummary(metric, clubs);
     res.json(result); // result now includes { series, units }
   } catch (error) {
     res.status(400).json({ error: error.message });

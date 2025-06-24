@@ -1,7 +1,7 @@
 import { allowlist } from "./aggregateSessions.js";
 import db from "./db.js";
 
-export async function computeProgressionSummary(metric) {
+export async function computeProgressionSummary(metric, clubFilter = []) {
 
   if (!allowlist.includes(metric)) {
     throw new Error("Invalid metric");
@@ -17,8 +17,9 @@ export async function computeProgressionSummary(metric) {
   const allClubs = new Set();
   for (const session of sessions) {
     for (const shot of session.data) {
-      if (shot["Club Type"]) {
-        allClubs.add(shot["Club Type"]);
+      const club = shot["Club Type"];
+      if (club && (clubFilter.length === 0 || clubFilter.includes(club))) {
+        allClubs.add(club);
       }
     }
   }
@@ -41,6 +42,7 @@ export async function computeProgressionSummary(metric) {
     for (const shot of session.data) {
       const club = shot["Club Type"];
       const value = shot[metric];
+      if (!club || (clubFilter.length > 0 && !clubFilter.includes(club))) continue;
       if (value === undefined || value === null) continue;
 
       if (!clubMetrics[club]) {

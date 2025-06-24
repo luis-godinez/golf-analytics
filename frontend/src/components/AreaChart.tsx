@@ -21,15 +21,23 @@ type Series = {
   data: DataPoint[];
 };
 
-const AreaChart: React.FC<{ defaultMetric: string }> = ({ defaultMetric }) => {
+const AreaChart: React.FC<{ defaultMetric: string; visibleClubTypes: string[] }> = ({ defaultMetric, visibleClubTypes }) => {
   const [metric, setMetric] = useState(defaultMetric);
   const [seriesData, setSeriesData] = useState<Series[]>([]);
   const [units, setUnits] = useState("");
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
+    if (visibleClubTypes.length === 0) {
+      setSeriesData([]);
+      if (svgRef.current) {
+        d3.select(svgRef.current).selectAll("*").remove();
+      }
+      return;
+    }
+    
     const fetchData = async () => {
-        const res = await fetch(`http://localhost:3001/sessions/progression-summary?metric=${encodeURIComponent(metric)}`);
+        const res = await fetch(`http://localhost:3001/sessions/progression-summary?metric=${encodeURIComponent(metric)}&clubs=${visibleClubTypes.join(",")}`);
         const json = await res.json();
       
         if (!Array.isArray(json.series)) {
@@ -39,11 +47,12 @@ const AreaChart: React.FC<{ defaultMetric: string }> = ({ defaultMetric }) => {
           return;
         }
       
+        // Removed filtering here because backend already filters by clubs
         setSeriesData(json.series);
         setUnits(json.units || "");
       };
     fetchData();
-  }, [metric]);
+  }, [metric, visibleClubTypes]);
 
   useEffect(() => {
     if (!svgRef.current || seriesData.length === 0) return;
@@ -106,20 +115,22 @@ const AreaChart: React.FC<{ defaultMetric: string }> = ({ defaultMetric }) => {
       .y(d => y(d.value));
 
     seriesData.forEach(s => {
+      const colorStroke = color(s.club)!;
+      const sorted = s.data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
       g.append("path")
-        .datum(s.data)
+        .datum(sorted)
         .attr("fill", "none")
-        .attr("stroke", color(s.club)!)
+        .attr("stroke", colorStroke)
         .attr("stroke-width", 1.5)
         .attr("d", line);
 
-      // Add club label at the end of the line
-      if (s.data.length > 0) {
+      if (sorted.length > 0) {
         g.append("text")
-          .attr("transform", `translate(${innerWidth},${y(s.data[s.data.length - 1].value)})`)
+          .attr("transform", `translate(${innerWidth},${y(sorted[sorted.length - 1].value)})`)
           .attr("dy", "0.35em")
           .attr("text-anchor", "end")
-          .attr("fill", color(s.club)!)
+          .attr("fill", colorStroke)
           .text(s.club);
       }
     });

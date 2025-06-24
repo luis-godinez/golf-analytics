@@ -7,6 +7,7 @@ interface DataFilterProps {
   visibleClubTypes: string[];
   setVisibleClubTypes: React.Dispatch<React.SetStateAction<string[]>>;
   availableClubTypes: string[];
+  showDistanceTypeToggle?: boolean;
 }
 
 const DataFilter: React.FC<DataFilterProps> = ({
@@ -15,45 +16,48 @@ const DataFilter: React.FC<DataFilterProps> = ({
   visibleClubTypes,
   setVisibleClubTypes,
   availableClubTypes,
+  showDistanceTypeToggle,
 }) => {
   const allVisible = visibleClubTypes.length === availableClubTypes.length;
 
   return (
     <div style={{ display: "flex", justifyContent: "center", margin: "0.5rem 0", flexWrap: "wrap", gap: "0.5rem" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.25rem 0.25rem",
-            backgroundColor: "#f5f5f5",
-            borderRadius: "999px",
-            border: "1px solid black",
-          }}
-        >
-          <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#666" }}>Distance:</span>
-          {(["Carry", "Total"] as const).map((type) => (
-            <span
-              key={type}
-              onClick={() => setDistanceType(type)}
-              style={{
-                padding: "4px 10px",
-                borderRadius: "999px",
-                backgroundColor: distanceType === type ? "#00000020" : "#eee",
-                color: distanceType === type ? "#000" : "#999",
-                fontWeight: 600,
-                fontSize: "0.85rem",
-                border: `1px solid ${distanceType === type ? "#000" : "#ccc"}`,
-                userSelect: "none",
-                cursor: "pointer",
-                opacity: 1
-              }}
-            >
-              {type}
-            </span>
-          ))}
-        </div>
+        {showDistanceTypeToggle !== false && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.25rem 0.25rem",
+              backgroundColor: "#f5f5f5",
+              borderRadius: "999px",
+              border: "1px solid black",
+            }}
+          >
+            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#666" }}>Distance:</span>
+            {(["Carry", "Total"] as const).map((type) => (
+              <span
+                key={type}
+                onClick={() => setDistanceType(type)}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: "999px",
+                  backgroundColor: distanceType === type ? "#00000020" : "#eee",
+                  color: distanceType === type ? "#000" : "#999",
+                  fontWeight: 600,
+                  fontSize: "0.85rem",
+                  border: `1px solid ${distanceType === type ? "#000" : "#ccc"}`,
+                  userSelect: "none",
+                  cursor: "pointer",
+                  opacity: 1
+                }}
+              >
+                {type}
+              </span>
+            ))}
+          </div>
+        )}
         <div
           style={{
             display: "flex",
