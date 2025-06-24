@@ -1,6 +1,6 @@
 
 # Golf Analytics for Garmin R50
-📊 Unlock insights from your golf practice — visualize your Garmin R50 shot data with beautiful, interactive dashboards. for exported CSVs of Garmin R50 launch monitor data.
+📊 Unlock insights from your golf practice — visualize your exported shot data with beautiful, interactive dashboards.
 
 ## Getting Started
 
