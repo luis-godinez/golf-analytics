@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import Overview from "./views/Overview";
+import SessionOverview from "./views/SessionOverview";
+import SessionData from "./views/SessionData";
 import Sessions from "./views/Sessions";
 import Progression from "./views/Progression";
 
@@ -7,15 +8,15 @@ import Progression from "./views/Progression";
 function App() {
   const [csvData, setCsvData] = useState<any[]>([]);
   const [units, setUnits] = useState<Record<string, string>>({});
-  const [activeTab, setActiveTab] = useState<"sessions" | "overview" | "progression">("sessions");
-  const [selectedDevice, setSelectedDevice] = useState<"garmin-r50" | "progression">("garmin-r50");
+  const [activeTab, setActiveTab] = useState<"sessions" | "progression" | "sessionOverview"  | "sessionData">("sessions");
+  const [selectedDevice, setSelectedDevice] = useState<"garmin-r50" | "other">("garmin-r50");
   const [showSettings, setShowSettings] = useState(false);
   const [filename, setFilename] = useState("");
   const [sessionList, setSessionList] = useState<string[]>([]);
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
-      if (activeTab !== "overview" || !filename || sessionList.length === 0) return;
+      if (!["sessionOverview", "sessionData"].includes(activeTab) || !filename || sessionList.length === 0) return;
 
       const currentIndex = sessionList.indexOf(filename);
       if (e.key === "ArrowLeft") {
@@ -44,7 +45,7 @@ function App() {
   }, [activeTab, filename, sessionList]);
 
 useEffect(() => {
-  if (activeTab === "overview" && !filename && sessionList.length > 0) {
+  if (["sessionOverview", "sessionData"].includes(activeTab) && !filename && sessionList.length > 0) {
     const firstFile = sessionList[0];
 
     fetch(`http://localhost:3001/sessions/${firstFile}`)
@@ -54,7 +55,7 @@ useEffect(() => {
         setUnits(json.units || {});
         setFilename(firstFile);
       })
-      .catch(err => console.error("Failed to load default session for overview", err));
+      .catch(err => console.error("Failed to load default session for SessionOverview", err));
   }
 }, [activeTab, filename, sessionList]);
 
@@ -75,7 +76,7 @@ useEffect(() => {
         ⛳ Golf Shot Analytics
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem", position: "relative" }}>
-          {activeTab === "overview" && filename && (
+          {["sessionOverview", "sessionData"].includes(activeTab) && filename && (
             <>
               <span style={{ fontStyle: "italic", color: "#555" }}>{filename}</span>
               <button
@@ -125,11 +126,11 @@ useEffect(() => {
                 <label>
                   <input
                     type="radio"
-                    value="progression"
-                    checked={selectedDevice === "progression"}
-                    onChange={() => setSelectedDevice("progression")}
+                    value="other"
+                    checked={selectedDevice === "other"}
+                    onChange={() => setSelectedDevice("other")}
                   />
-                  Progression
+                  Future Support
                 </label>
               </div>
             )}
@@ -152,19 +153,6 @@ useEffect(() => {
             Sessions
           </button>
           <button
-            onClick={() => setActiveTab("overview")}
-            style={{
-              padding: "0.5rem 1rem",
-              border: "none",
-              borderBottom: activeTab === "overview" ? "3px solid #0070f3" : "none",
-              background: "none",
-              fontWeight: activeTab === "overview" ? "bold" : "normal",
-              cursor: "pointer",
-            }}
-          >
-            Overview
-          </button>
-          <button
             onClick={() => setActiveTab("progression")}
             style={{
               padding: "0.5rem 1rem",
@@ -176,6 +164,32 @@ useEffect(() => {
             }}
           >
             Progression
+          </button>
+          <button
+            onClick={() => setActiveTab("sessionOverview")}
+            style={{
+              padding: "0.5rem 1rem",
+              border: "none",
+              borderBottom: activeTab === "sessionOverview" ? "3px solid #0070f3" : "none",
+              background: "none",
+              fontWeight: activeTab === "sessionOverview" ? "bold" : "normal",
+              cursor: "pointer",
+            }}
+          >
+            Session Overview
+          </button>
+          <button
+            onClick={() => setActiveTab("sessionData")}
+            style={{
+              padding: "0.5rem 1rem",
+              border: "none",
+              borderBottom: activeTab === "sessionData" ? "3px solid #0070f3" : "none",
+              background: "none",
+              fontWeight: activeTab === "sessionData" ? "bold" : "normal",
+              cursor: "pointer",
+            }}
+          >
+            Session Data
           </button>
         </div>
 
@@ -193,9 +207,9 @@ useEffect(() => {
               }}
             />
           )}
-          {activeTab === "overview" && <Overview data={csvData} units={units} selectedDeviceType={selectedDevice} filename={filename} />}
           {activeTab === "progression" && <Progression/>}
-
+          {activeTab === "sessionOverview" && <SessionOverview data={csvData} units={units} selectedDeviceType={selectedDevice} filename={filename} />}
+          {activeTab === "sessionData" && <SessionData  data={csvData} units={units} selectedDeviceType={selectedDevice} filename={filename} />}
         </div>
       </main>
     </div>

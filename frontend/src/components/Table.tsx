@@ -1,3 +1,4 @@
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import React, { useState, useEffect } from "react";
 
 interface TableProps {
@@ -43,42 +44,40 @@ const TableComponent: React.FC<TableProps> = ({ data, units }) => {
     );
   };
 
+  const columns: GridColDef[] = rawKeys.map((key, index) => ({
+    field: key,
+    headerName: units[key] ? `${key} ${units[key]}` : key,
+    width: index === 0 ? 150 : undefined,
+    flex: index === 0 ? undefined : 1,
+    sortable: true,
+    filterable: true,
+  }));
+
+  const rowsWithId = sortedRows.map((row, index) => {
+    const roundedRow: Record<string, any> = {};
+    for (const key in row) {
+      const value = row[key];
+      const num = Number(value);
+      roundedRow[key] = !isNaN(num) ? num.toFixed(1) : value;
+    }
+    return { id: index, ...roundedRow };
+  });
+
   return (
-    <table style={{ borderCollapse: "collapse", marginTop: "1rem", width: "100%" }}>
-      <thead>
-        <tr>
-          {headers.map((header, i) => (
-            <th
-              key={rawKeys[i]}
-              onClick={() => requestSort(rawKeys[i])}
-              style={{
-                position: "sticky",
-                top: 0,
-                background: "white",
-                border: "1px solid black",
-                padding: "5px",
-                cursor: "pointer",
-                zIndex: 1,
-              }}
-            >
-              {header}
-              {sortConfig?.key === rawKeys[i] ? (sortConfig.direction === "asc" ? " ▲" : " ▼") : ""}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {sortedRows.map((row, i) => (
-          <tr key={i}>
-            {rawKeys.map((key) => (
-              <td key={key} style={{ border: "1px solid black", padding: "5px" }}>
-                {String(row[key])}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div style={{ height: '95%', width: "100%", marginTop: "1rem", flexGrow: 1 }}>
+      <DataGrid
+        rows={rowsWithId}
+        columns={columns}
+        checkboxSelection
+        disableRowSelectionOnClick
+        pageSizeOptions={[25, 50, 100]}
+        initialState={{
+          pagination: {
+            paginationModel: { pageSize: 25, page: 0 },
+          },
+        }}
+      />
+    </div>
   );
 };
 

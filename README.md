@@ -63,7 +63,11 @@ The app provides multiple data visualization views for golf shot analysis:
 - Displays session name, shot count, and number of clubs used.
 - Allows you to **load** a specific session into the Overview view.
 
-### 2. Overview View
+### 2. Progression View
+- Stacked area charts of performance metrics (Carry Distance, Launch Angle, Spin, etc.).
+- Visualizes shot trends over time per club type across sessions.
+
+### 3. Session Overview View
 - Includes the following charts:
   - **Trajectory Side View**
   - **Trajectory Top View**
@@ -72,9 +76,9 @@ The app provides multiple data visualization views for golf shot analysis:
 - Supports club type toggles.
 - Use the **arrow keys** (← and →) to quickly switch between sessions.
 
-### 3. Progression View
-- Stacked area charts of performance metrics (Carry Distance, Launch Angle, Spin, etc.).
-- Visualizes shot trends over time per club type across sessions.
+### 4. Session Data View
+- Table of all shot data
+- (Coming Soon) Average of all data fields per club type
 
 ## Screenshots
 

@@ -15,7 +15,7 @@ import {
 
 interface SessionsProps {
   onSessionLoad: (data: any[], units: Record<string, string>, filename: string) => void;
-  onViewChange: (view: "overview") => void;
+  onViewChange: (view: "sessionOverview") => void;
   onSessionListUpdate: (filenames: string[], allClubTypes: string[]) => void;
 }
 
@@ -46,7 +46,7 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onViewChange, onSess
       const res = await fetch(`http://localhost:3001/sessions/${filename}`);
       const json = await res.json();
       onSessionLoad(json.data, json.units || {}, filename);
-      onViewChange("overview");
+      onViewChange("sessionOverview");
     } catch (err) {
       console.error("Failed to load session data", err);
     }

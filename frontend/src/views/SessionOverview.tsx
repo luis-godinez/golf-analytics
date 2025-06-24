@@ -13,7 +13,7 @@ interface OverviewProps {
   filename: string;
 }
 
-const Overview: React.FC<OverviewProps> = ({ data, selectedDeviceType, units, filename }) => {
+const SessionOverview: React.FC<OverviewProps> = ({ data, selectedDeviceType, units, filename }) => {
   const [visibleClubTypes, setVisibleClubTypes] = useState<string[]>([]);
   const [availableClubTypes, setAvailableClubTypes] = useState<string[]>([]);
   const [bounds, setBounds] = useState<Record<string, { min: number; max: number }>>({});
@@ -68,4 +68,4 @@ const Overview: React.FC<OverviewProps> = ({ data, selectedDeviceType, units, fi
   );
 };
 
-export default Overview;
+export default SessionOverview;
