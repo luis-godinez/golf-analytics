@@ -8,19 +8,21 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
   Paper,
-  TablePagination
+  TablePagination,
+  Menu,
+  MenuItem
 } from '@mui/material';
 
 interface SessionsProps {
   onSessionLoad: (data: any[], units: Record<string, string>, filename: string) => void;
-  onViewChange: (view: "sessionOverview") => void;
   onSessionListUpdate: (filenames: string[], allClubTypes: string[]) => void;
 }
 
-const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onViewChange, onSessionListUpdate }) => {
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate }) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const open = Boolean(anchorEl);
   const [page, setPage] = useState(0);
   const rowsPerPage = 10;
 
@@ -46,7 +48,6 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onViewChange, onSess
       const res = await fetch(`http://localhost:3001/sessions/${filename}`);
       const json = await res.json();
       onSessionLoad(json.data, json.units || {}, filename);
-      onViewChange("sessionOverview");
     } catch (err) {
       console.error("Failed to load session data", err);
     }
@@ -71,18 +72,19 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onViewChange, onSess
                 .map((session, index) => (
                   <TableRow
                     key={index}
-                    onMouseEnter={() => setHoveredRow(index)}
-                    onMouseLeave={() => setHoveredRow(null)}
                     hover
                   >
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.filename}</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.shots}</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.availableClubs.length}</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }} align="right">
-                      <Box sx={{ visibility: hoveredRow === index ? 'visible' : 'hidden' }}>
+                      <Box>
                         <Button
                           variant="outlined"
-                          onClick={() => handleLoadSession(session.filename)}
+                          onClick={(e) => {
+                            setSelectedSession(session.filename);
+                            setAnchorEl(e.currentTarget);
+                          }}
                         >
                           Load
                         </Button>
@@ -102,6 +104,32 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onViewChange, onSess
           rowsPerPageOptions={[]}
         />
       </Paper>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={() => setAnchorEl(null)}
+      >
+        <MenuItem
+          onClick={() => {
+            if (selectedSession) {
+              handleLoadSession(selectedSession);
+            }
+            setAnchorEl(null);
+          }}
+        >
+          Overview
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (selectedSession) {
+              handleLoadSession(selectedSession);
+            }
+            setAnchorEl(null);
+          }}
+        >
+          Data
+        </MenuItem>
+      </Menu>
     </Box>
   );
 };

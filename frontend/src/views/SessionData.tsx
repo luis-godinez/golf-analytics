@@ -1,5 +1,6 @@
 import React from "react";
 import TableComponent from "../components/Table";
+import { Box, Typography } from "@mui/material";
 
 interface SessionDataProps {
   data: any[];
@@ -10,13 +11,13 @@ interface SessionDataProps {
 
 const SessionData: React.FC<SessionDataProps> = ({ data, units, selectedDeviceType, filename }) => {
   if (!data || data.length === 0) {
-    return <div>No shot data available.</div>;
+    return <Typography variant="body1">No shot data available.</Typography>;
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <TableComponent data={data} units={units} />
-    </div>
+    </Box>
   );
 };
 

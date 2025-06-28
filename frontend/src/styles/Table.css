@@ -1,0 +1,32 @@
+.wrap-header .MuiDataGrid-columnHeaderTitle {
+  white-space: normal !important;
+  line-height: 1.2;
+  word-break: break-word;
+  display: block;
+  text-align: left;
+  align-self: flex-start !important;
+  justify-content: flex-start !important;
+}
+
+/* Automatically generated row background classes */
+.club-row-Lob-Wedge { background-color: rgba(31, 119, 180, 0.3); }
+.club-row-Sand-Wedge { background-color: rgba(255, 127, 14, 0.3); }
+.club-row-Gap-Wedge { background-color: rgba(44, 160, 44, 0.3); }
+.club-row-Pitching-Wedge { background-color: rgba(214, 39, 40, 0.3); }
+.club-row-9-Iron { background-color: rgba(148, 103, 189, 0.3); }
+.club-row-8-Iron { background-color: rgba(140, 86, 75, 0.3); }
+.club-row-7-Iron { background-color: rgba(227, 119, 194, 0.3); }
+.club-row-6-Iron { background-color: rgba(127, 127, 127, 0.3); }
+.club-row-5-Iron { background-color: rgba(188, 189, 34, 0.3); }
+.club-row-4-Iron { background-color: rgba(23, 190, 207, 0.3); }
+.club-row-3-Iron { background-color: rgba(57, 59, 121, 0.3); }
+.club-row-2-Iron { background-color: rgba(99, 121, 57, 0.3); }
+.club-row-1-Iron { background-color: rgba(140, 109, 49, 0.3); }
+.club-row-4-Hybrid { background-color: rgba(132, 60, 57, 0.3); }
+.club-row-3-Hybrid { background-color: rgba(123, 65, 115, 0.3); }
+.club-row-2-Hybrid { background-color: rgba(49, 130, 189, 0.3); }
+.club-row-9-Wood { background-color: rgba(243, 63, 63, 0.3); }
+.club-row-7-Wood { background-color: rgba(49, 163, 84, 0.3); }
+.club-row-5-Wood { background-color: rgba(117, 107, 177, 0.3); }
+.club-row-3-Wood { background-color: rgba(99, 99, 99, 0.3); }
+.club-row-Driver { background-color: rgba(255, 187, 120, 0.3); }

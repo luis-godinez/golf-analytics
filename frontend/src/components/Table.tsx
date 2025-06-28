@@ -1,5 +1,7 @@
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import Box from '@mui/material/Box';
+import "../styles/Table.css";
 
 interface TableProps {
   data: any[];
@@ -7,15 +9,8 @@ interface TableProps {
 }
 
 const TableComponent: React.FC<TableProps> = ({ data, units }) => {
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
+  const [sortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
 
-  const headers = React.useMemo(() => {
-    if (data.length === 0) return [];
-    return Object.keys(data[0]).map((key) => {
-      const unit = units[key];
-      return unit ? `${key} ${unit}` : key;
-    });
-  }, [data, units]);
 
   const rawKeys = React.useMemo(() => (data.length > 0 ? Object.keys(data[0]) : []), [data]);
   const rows = React.useMemo(() => (data.length > 0 ? data : []), [data]);
@@ -36,21 +31,15 @@ const TableComponent: React.FC<TableProps> = ({ data, units }) => {
 
   if (rows.length === 0) return <div>Not enough data to display.</div>;
 
-  const requestSort = (key: string) => {
-    setSortConfig((prev) =>
-      prev?.key === key && prev.direction === "asc"
-        ? { key, direction: "desc" }
-        : { key, direction: "asc" }
-    );
-  };
 
   const columns: GridColDef[] = rawKeys.map((key, index) => ({
     field: key,
     headerName: units[key] ? `${key} ${units[key]}` : key,
-    width: index === 0 ? 150 : undefined,
-    flex: index === 0 ? undefined : 1,
+    width: index === 0 ? 150 : 120,
     sortable: true,
     filterable: true,
+    headerClassName: 'wrap-header',
+    minWidth: 100,
   }));
 
   const rowsWithId = sortedRows.map((row, index) => {
@@ -64,7 +53,7 @@ const TableComponent: React.FC<TableProps> = ({ data, units }) => {
   });
 
   return (
-    <div style={{ height: '95%', width: "100%", marginTop: "1rem", flexGrow: 1 }}>
+    <Box sx={{ height: '95%', width: "100%", marginTop: "1rem", flexGrow: 1, overflowX: "auto" }}>
       <DataGrid
         rows={rowsWithId}
         columns={columns}
@@ -76,8 +65,12 @@ const TableComponent: React.FC<TableProps> = ({ data, units }) => {
             paginationModel: { pageSize: 25, page: 0 },
           },
         }}
+        getRowClassName={(params) => {
+          const clubType = params.row["Club Type"];
+          return clubType ? `club-row-${clubType.replace(/\s+/g, "-")}` : "";
+        }}
       />
-    </div>
+    </Box>
   );
 };
 

@@ -1,14 +1,31 @@
 import React from "react";
 import { CLUB_TYPE_COLORS, CLUB_TYPE_ORDER } from "../constants/clubTypes";
+import { DistanceType, DISTANCE_TYPE_OPTIONS } from "../constants/distanceTypes";
+import { ShotQualityType, SHOT_QUALITY_OPTIONS } from "../constants/shotQualityTypes";
 
 interface DataFilterProps {
-  distanceType: "Carry" | "Total";
-  setDistanceType: (type: "Carry" | "Total") => void;
+  distanceType: DistanceType;
+  setDistanceType: (type: DistanceType) => void;
   visibleClubTypes: string[];
   setVisibleClubTypes: React.Dispatch<React.SetStateAction<string[]>>;
   availableClubTypes: string[];
   showDistanceTypeToggle?: boolean;
+  showShotQualityToggle: boolean;
+  shotQuality?: ShotQualityType;
+  setShotQuality?: (quality: ShotQualityType) => void;
+  availableShotQualities?: ShotQualityType[];
 }
+
+const filterContainerStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "0.25rem",
+  padding: "0.25rem 0.25rem",
+  backgroundColor: "#f5f5f5",
+  border: "1px solid lightgray",
+  borderRadius: "999px",
+  flexWrap: "wrap",
+};
 
 const DataFilter: React.FC<DataFilterProps> = ({
   distanceType,
@@ -17,6 +34,10 @@ const DataFilter: React.FC<DataFilterProps> = ({
   setVisibleClubTypes,
   availableClubTypes,
   showDistanceTypeToggle,
+  showShotQualityToggle,
+  shotQuality,
+  setShotQuality,
+  availableShotQualities,
 }) => {
   const allVisible = visibleClubTypes.length === availableClubTypes.length;
 
@@ -24,19 +45,9 @@ const DataFilter: React.FC<DataFilterProps> = ({
     <div style={{ display: "flex", justifyContent: "center", margin: "0.5rem 0", flexWrap: "wrap", gap: "0.5rem" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
         {showDistanceTypeToggle !== false && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              padding: "0.25rem 0.25rem",
-              backgroundColor: "#f5f5f5",
-              borderRadius: "999px",
-              border: "1px solid black",
-            }}
-          >
+          <div style={filterContainerStyle}>
             <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#666" }}>Distance:</span>
-            {(["Carry", "Total"] as const).map((type) => (
+            {DISTANCE_TYPE_OPTIONS.map((type) => (
               <span
                 key={type}
                 onClick={() => setDistanceType(type)}
@@ -58,18 +69,32 @@ const DataFilter: React.FC<DataFilterProps> = ({
             ))}
           </div>
         )}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.25rem 0.25rem",
-            backgroundColor: "#f5f5f5",
-            border: "1px solid black",
-            borderRadius: "999px",
-            flexWrap: "wrap"
-          }}
-        >
+        {showShotQualityToggle && (
+          <div style={filterContainerStyle}>
+            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#666" }}>Tag:</span>
+            {(availableShotQualities || SHOT_QUALITY_OPTIONS).map((quality) => (
+              <span
+                key={quality}
+                onClick={() => setShotQuality?.(quality)}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: "999px",
+                  backgroundColor: shotQuality === quality ? "white" : "#eee",
+                  color: shotQuality === quality ? "#000" : "#999",
+                  fontWeight: 600,
+                  fontSize: "0.85rem",
+                  border: `1px solid ${shotQuality === quality ? "#000" : "#ccc"}`,
+                  userSelect: "none",
+                  cursor: "pointer",
+                  opacity: 1,
+                }}
+              >
+                {quality === "" ? "Any" : quality === "GOOD" ? "👍🏻" : "👎🏻"}
+              </span>
+            ))}
+          </div>
+        )}
+        <div style={filterContainerStyle}>
           <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#666" }}>Clubs:</span>
           <span
             onClick={() => {
@@ -78,7 +103,7 @@ const DataFilter: React.FC<DataFilterProps> = ({
             style={{
               padding: "4px 10px",
               borderRadius: "999px",
-              backgroundColor: allVisible ? "#00000020" : "#eee",
+              backgroundColor: allVisible ? "white" : "#eee",
               color: allVisible ? "#000" : "#999",
               fontWeight: 600,
               fontSize: "0.85rem",

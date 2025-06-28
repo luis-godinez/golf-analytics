@@ -16,14 +16,13 @@ interface ShotData {
 
 interface TrajectoriesSideViewProps {
   data: ShotData[];
-  visibleClubTypes: string[];
   bounds: Record<string, { min: number; max: number }>;
   width?: number;
   height?: number;
 }
 
 
-const TrajectoriesSideViewComponent: React.FC<TrajectoriesSideViewProps> = ({ data, visibleClubTypes, bounds, width = 700, height = 400 }) => {
+const TrajectoriesSideViewComponent: React.FC<TrajectoriesSideViewProps> = ({ data, bounds, width = 700, height = 400 }) => {
   const sideView = useRef<SVGSVGElement | null>(null);
   const topView = useRef<SVGSVGElement | null>(null);
   const [containerWidth, setContainerWidth] = useState(width);
@@ -53,7 +52,7 @@ const TrajectoriesSideViewComponent: React.FC<TrajectoriesSideViewProps> = ({ da
       totalDistance: parseFloat(d["Total Distance"]),
       totalDeviationDistance: parseFloat(d["Total Deviation Distance"]),
     }));
-    if (!parsedData.length) return;
+    // Proceed to draw axes even if parsedData is empty
     // console.log("Sample trajectory data point:", parsedData[0]);
 
     const margin = { top: 40, right: 30, bottom: 70, left: 60 };
@@ -63,18 +62,14 @@ const TrajectoriesSideViewComponent: React.FC<TrajectoriesSideViewProps> = ({ da
     const svg = d3.select(sideView.current);
     svg.selectAll('*').remove();
 
-    // Group data by club type
-    const dataByClub = d3.group(parsedData, d => d.clubType);
-
-    // Scales
+    // Use configured bounds regardless of data length
     const xExtent = [
       0,
-      bounds["Total Distance"] ? bounds["Total Distance"].max : d3.max(parsedData, d => Math.max(d.carryDistance, d.totalDistance)) || 0
+      bounds["Total Distance"] ? bounds["Total Distance"].max : 100
     ] as [number, number];
-    // Convert apexHeight to yards for yExtent
     const yExtent = [
       0,
-      bounds["Apex Height"] ? bounds["Apex Height"].max * 1.09361 : d3.max(parsedData, d => d.apexHeight * 1.09361) || 0
+      bounds["Apex Height"] ? bounds["Apex Height"].max * 1.09361 : 30
     ] as [number, number];
 
     const xScale = d3.scaleLinear().domain([Math.min(0, xExtent[0]), xExtent[1]]).range([0, w]).nice();
@@ -112,81 +107,63 @@ const TrajectoriesSideViewComponent: React.FC<TrajectoriesSideViewProps> = ({ da
         .attr('font-size', '12px')
         .text('Height (Meters)'));
 
-    // Unique club types for coloring
-    const clubTypes = Array.from(new Set(parsedData.map(d => d.clubType)));
+    // Only plot trajectories if data is available
+    if (parsedData.length > 0) {
+      parsedData.forEach((d) => {
+        const points: { x: number; y: number }[] = [];
+        const apexYards = d.apexHeight * 1.09361;
+        const carry = d.carryDistance;
+        const steps = 30;
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps;
+          const x = t * carry;
+          const y = 4 * apexYards * t * (1 - t);
+          points.push({ x, y });
+        }
 
-    // Draw trajectories using simple quadratic curve interpolation
-    parsedData.forEach((d, i) => {
-      if (!visibleClubTypes.includes(d.clubType)) return;
+        const carryDistance = d.carryDistance;
+        const totalDistance = !isNaN(d.totalDistance) ? d.totalDistance : carryDistance;
+        const rollDistance = Math.max(0, totalDistance - carryDistance);
+        const descentProxy = apexYards / carryDistance;
+        const bounceApex = descentProxy * rollDistance * 0.5;
 
-      // Simple quadratic curve points
-      const points: { x: number; y: number }[] = [];
-      const apexYards = d.apexHeight * 1.09361;
-      const carry = d.carryDistance;
-      const steps = 30;
-      for (let i = 0; i <= steps; i++) {
-        const t = i / steps;
-        const x = t * carry;
-        const y = 4 * apexYards * t * (1 - t);
-        points.push({ x, y });
-      }
+        const rollArchPoints: { x: number, y: number }[] = [];
+        const rollSteps = 20;
+        for (let j = 0; j <= rollSteps; j++) {
+          const t = j / rollSteps;
+          const x = carryDistance + t * rollDistance;
+          const y = 4 * bounceApex * t * (1 - t);
+          rollArchPoints.push({ x, y });
+        }
 
-      // Add a simple arch between carry and total distance
-      const carryDistance = d.carryDistance;
-      const totalDistance = !isNaN(d.totalDistance) ? d.totalDistance : carryDistance;
-      const rollDistance = Math.max(0, totalDistance - carryDistance);
-      const descentProxy = apexYards / carryDistance;
-      const bounceApex = descentProxy * rollDistance * 0.5; // heuristic bounce apex
+        const line = d3.line<{ x: number, y: number }>()
+          .x(p => xScale(p.x))
+          .y(p => yScale(p.y))
+          .curve(d3.curveBasis);
 
-      const rollArchPoints: { x: number, y: number }[] = [];
-      const rollSteps = 20;
-      for (let j = 0; j <= rollSteps; j++) {
-        const t = j / rollSteps;
-        const x = carryDistance + t * rollDistance;
-        const y = 4 * bounceApex * t * (1 - t); // simple parabola
-        rollArchPoints.push({ x, y });
-      }
+        const rollLine = d3.line<{ x: number, y: number }>()
+          .x(p => xScale(p.x))
+          .y(p => yScale(p.y))
+          .curve(d3.curveLinear);
 
-      const line = d3.line<{ x: number, y: number }>()
-        .x(p => xScale(p.x))
-        .y(p => yScale(p.y))
-        .curve(d3.curveBasis);
+        group.append('path')
+          .datum(points)
+          .attr('fill', 'none')
+          .attr('stroke', CLUB_TYPE_COLORS[d.clubType])
+          .attr('stroke-width', 1)
+          .attr('d', line(points));
 
-      const rollLine = d3.line<{ x: number, y: number }>()
-        .x(p => xScale(p.x))
-        .y(p => yScale(p.y))
-        .curve(d3.curveLinear);
+        group.append('path')
+          .datum(rollArchPoints)
+          .attr('fill', 'none')
+          .attr('stroke', CLUB_TYPE_COLORS[d.clubType])
+          .attr('stroke-width', 0.8)
+          .attr("stroke-dasharray", "3,3")
+          .attr('d', rollLine);
+      });
+    }
 
-      group.append('path')
-        .datum(points)
-        .attr('fill', 'none')
-        .attr('stroke', CLUB_TYPE_COLORS[d.clubType])
-        .attr('stroke-width', 1)
-        .attr('d', line(points));
-
-      group.append('path')
-        .datum(rollArchPoints)
-        .attr('fill', 'none')
-        .attr('stroke', CLUB_TYPE_COLORS[d.clubType])
-        .attr('stroke-width', 0.8)
-        .attr("stroke-dasharray", "3,3") // small dots
-        .attr('d', rollLine);
-    });
-
-  }, [data, containerWidth, height, visibleClubTypes, bounds]);
-
-  const parsedDataForClubs: ShotData[] = data.map((d: any) => ({
-    carryDistance: parseFloat(d["Carry Distance"]),
-    apexHeight: parseFloat(d["Apex Height"]),
-    clubType: d["Club Type"],
-    launchAngle: parseFloat(d["Launch Angle"]),
-    ballSpeed: parseFloat(d["Ball Speed"]),
-    backspin: parseFloat(d["Backspin"]),
-    airDensity: parseFloat(d["Air Density"]),
-    totalDistance: parseFloat(d["Total Distance"]),
-    totalDeviationDistance: parseFloat(d["Total Deviation Distance"]),
-  }));
-  const clubTypes = Array.from(new Set(parsedDataForClubs.map(d => d.clubType)));
+  }, [data, containerWidth, height, bounds]);
 
   return (
     <>

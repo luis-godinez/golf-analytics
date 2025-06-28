@@ -10,14 +10,13 @@ interface ShotData {
 
 interface TrajectoriesTopViewProps {
   data: ShotData[];
-  visibleClubTypes: string[];
   bounds: Record<string, { min: number; max: number }>;
   width?: number;
   height?: number;
   distanceType: "Carry" | "Total";
 }
 
-const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data, visibleClubTypes, bounds, width = 700, height = 400, distanceType }) => {
+const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data, bounds, width = 700, height = 400, distanceType }) => {
   const topView = useRef<SVGSVGElement | null>(null);
   const [containerWidth, setContainerWidth] = useState(width);
   const [containerHeight, setContainerHeight] = useState(height);
@@ -43,7 +42,6 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
       totalDeviationDistance: parseFloat(d[distanceType === "Carry" ? "Carry Deviation Distance" : "Total Deviation Distance"]),
       clubType: d["Club Type"]
     }));
-    if (!parsedData.length) return;
 
     const margin = { top: 40, right: 30, bottom: 70, left: 60 };
     const w = containerWidth - margin.left - margin.right;
@@ -61,31 +59,26 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
       .attr("width", w)
       .attr("height", h);
 
-    // Outer group for axes (not clipped)
     const plotGroup = svg.append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // Inner group for visual content (clipped)
     const clipGroup = plotGroup.append("g")
       .attr("clip-path", "url(#plot-area-clip)");
 
     const maxAbsDeviation = bounds["Total Deviation Distance"]
       ? Math.max(Math.abs(bounds["Total Deviation Distance"].min), Math.abs(bounds["Total Deviation Distance"].max))
-      : d3.max(parsedData, d => Math.abs(d.totalDeviationDistance)) || 0;
+      : 0;
 
-    const xExtent: [number, number] = [
-      -maxAbsDeviation,
-      maxAbsDeviation
-    ];
+    const xExtent: [number, number] = [-maxAbsDeviation, maxAbsDeviation];
     const yExtent: [number, number] = [
       0,
-      bounds[distanceType + " Distance"] ? bounds[distanceType + " Distance"].max : d3.max(parsedData, d => d.totalDistance) || 0
+      bounds[distanceType + " Distance"] ? bounds[distanceType + " Distance"].max : 0
     ];
 
     const xScale = d3.scaleLinear().domain(xExtent).range([0, w]).nice();
     const yScale = d3.scaleLinear().domain(yExtent).range([h, 0]).nice();
 
-    // Add X-axis (not clipped)
+    // Draw axes
     plotGroup.append('g')
       .attr('transform', `translate(0,${h})`)
       .call(d3.axisBottom(xScale))
@@ -98,7 +91,6 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
         .style("font-size", "12px")
         .text('Deviation (Yards)'));
 
-    // Add Y-axis (not clipped)
     plotGroup.append('g')
       .call(d3.axisLeft(yScale).ticks(Math.ceil(yExtent[1] / 20)))
       .call(g => g.append('text')
@@ -111,7 +103,7 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
         .style("font-size", "12px")
         .text(`${distanceType} (Yards)`));
 
-    // Draw grid lines, circles, and trajectories inside clipGroup (clipped)
+    // Grid lines and reference circles
     const yTicks = yScale.ticks(Math.ceil(yExtent[1] / 20));
     clipGroup.selectAll(".horizontal-grid")
       .data(yTicks)
@@ -162,18 +154,20 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
       .attr("stroke-width", 1)
       .attr("stroke-opacity", 0.5);
 
-    parsedData.forEach((d) => {
-      if (!visibleClubTypes.includes(d.clubType)) return;
-      clipGroup.append('line')
-        .attr('x1', xScale(0))
-        .attr('y1', yScale(0))
-        .attr('x2', xScale(d.totalDeviationDistance))
-        .attr('y2', yScale(d.totalDistance))
-        .attr('stroke', CLUB_TYPE_COLORS[d.clubType])
-        .attr('stroke-width', 1.8);
-    });
+    // Plot lines only if data
+    if (parsedData.length > 0) {
+      parsedData.forEach((d) => {
+        clipGroup.append('line')
+          .attr('x1', xScale(0))
+          .attr('y1', yScale(0))
+          .attr('x2', xScale(d.totalDeviationDistance))
+          .attr('y2', yScale(d.totalDistance))
+          .attr('stroke', CLUB_TYPE_COLORS[d.clubType])
+          .attr('stroke-width', 1.8);
+      });
+    }
 
-  }, [data, containerWidth, containerHeight, visibleClubTypes, bounds, distanceType]);
+  }, [data, containerWidth, containerHeight, bounds, distanceType]);
 
   return (
     <svg

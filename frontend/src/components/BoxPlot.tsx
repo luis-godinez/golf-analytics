@@ -29,21 +29,8 @@ const BoxPlotComponent: React.FC<BoxPlotProps> = ({ data, bounds, availableClubs
   }, []);
 
   useEffect(() => {
-    if (!data || data.length === 0 || !svgRef.current) return;
+    if (!svgRef.current) return;
     if (dimensions.width === 0 || dimensions.height === 0) return;
-
-    const grouped = d3.group(data, d => d["Club Type"]);
-
-    // Compute boxplot data
-    const boxData = Array.from(grouped.entries()).map(([clubType, shots]) => {
-      const values = shots.map(d => +d[`${distanceType} Distance`]).sort(d3.ascending);
-      const q1 = d3.quantile(values, 0.25) ?? 0;
-      const median = d3.quantile(values, 0.5) ?? 0;
-      const q3 = d3.quantile(values, 0.75) ?? 0;
-      const min = values[0];
-      const max = values[values.length - 1];
-      return { clubType, min, q1, median, q3, max };
-    }).sort((a, b) => a.median - b.median);
 
     const margin = { top: 20, right: 30, bottom: 100, left: 50 };
     const width = dimensions.width;
@@ -87,6 +74,23 @@ const BoxPlotComponent: React.FC<BoxPlotProps> = ({ data, bounds, availableClubs
     g.append("g")
       .attr("transform", `translate(0,${height - margin.top - margin.bottom})`)
       .call(d3.axisBottom(x));
+
+    if (data.length === 0) {
+      return; // Axes and labels remain; no boxes or whiskers drawn
+    }
+
+    const grouped = d3.group(data, d => d["Club Type"]);
+
+    // Compute boxplot data
+    const boxData = Array.from(grouped.entries()).map(([clubType, shots]) => {
+      const values = shots.map(d => +d[`${distanceType} Distance`]).sort(d3.ascending);
+      const q1 = d3.quantile(values, 0.25) ?? 0;
+      const median = d3.quantile(values, 0.5) ?? 0;
+      const q3 = d3.quantile(values, 0.75) ?? 0;
+      const min = values[0];
+      const max = values[values.length - 1];
+      return { clubType, min, q1, median, q3, max };
+    }).sort((a, b) => a.median - b.median);
 
     const boxDataMap = new Map(boxData.map(d => [d.clubType, d]));
 

@@ -5,6 +5,8 @@ import TrajectoriesSideViewComponent from "../components/TrajectoriesSideView";
 import TrajectoriesTopViewComponent from "../components/TrajectoriesTopView";
 import { CLUB_TYPE_ORDER } from "../constants/clubTypes";
 import DataFilter from "../components/DataFilter";
+import { DistanceType, DEFAULT_DISTANCE_TYPE } from "../constants/distanceTypes";
+import { ShotQualityType, DEFAULT_SHOT_QUALITY_TYPE } from "../constants/shotQualityTypes";
 
 interface OverviewProps {
   data: any[];
@@ -17,7 +19,8 @@ const SessionOverview: React.FC<OverviewProps> = ({ data, selectedDeviceType, un
   const [visibleClubTypes, setVisibleClubTypes] = useState<string[]>([]);
   const [availableClubTypes, setAvailableClubTypes] = useState<string[]>([]);
   const [bounds, setBounds] = useState<Record<string, { min: number; max: number }>>({});
-  const [distanceType, setDistanceType] = useState<"Carry" | "Total">("Carry");
+  const [distanceType, setDistanceType] = useState<DistanceType>(DEFAULT_DISTANCE_TYPE);
+  const [shotQuality, setShotQuality] = useState<ShotQualityType>(DEFAULT_SHOT_QUALITY_TYPE);
 
   useEffect(() => {
     setVisibleClubTypes(CLUB_TYPE_ORDER);
@@ -34,14 +37,44 @@ const SessionOverview: React.FC<OverviewProps> = ({ data, selectedDeviceType, un
       .catch((err) => console.error("Failed to load club types", err));
   }, []);
 
+  // Determine which shot qualities are available in this dataset
+  const availableShotQualities: ShotQualityType[] = [""];
+
+  const hasGood = data.some((shot) => shot.Tag === "GOOD");
+  const hasBad = data.some((shot) => shot.Tag === "BAD");
+
+  if (hasGood) availableShotQualities.push("GOOD");
+  if (hasBad) availableShotQualities.push("BAD");
+
+  const showShotQualityToggle = hasGood || hasBad;
+
+  const filteredData = data.filter((shot) => {
+    if (shotQuality === "") return true;
+    if (shotQuality === "GOOD") return shot.Tag === "GOOD";
+    if (shotQuality === "BAD") return shot.Tag === "BAD";
+    // Default fallback: include shots with empty Note if needed
+    return shot.Tag === "" || shot.Tag === undefined;
+  });
+
+  const clubFilteredData = React.useMemo(() => {
+    if (visibleClubTypes.length === 0) {
+      return [];
+    }
+    return filteredData.filter((shot) => visibleClubTypes.includes(shot["Club Type"]));
+  }, [filteredData, visibleClubTypes]);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "auto" }}>
       <DataFilter
         distanceType={distanceType}
         setDistanceType={setDistanceType}
         visibleClubTypes={visibleClubTypes}
         setVisibleClubTypes={setVisibleClubTypes}
         availableClubTypes={availableClubTypes}
+        shotQuality={shotQuality}
+        setShotQuality={setShotQuality}
+        showShotQualityToggle={showShotQualityToggle}
+        availableShotQualities={availableShotQualities}
       />
       <div
         style={{
@@ -54,14 +87,14 @@ const SessionOverview: React.FC<OverviewProps> = ({ data, selectedDeviceType, un
         }}
       >
         <div style={{ width: '30vw' }}>
-        <TrajectoriesTopViewComponent data={data} visibleClubTypes={visibleClubTypes} bounds={bounds} distanceType={distanceType} />
+        <TrajectoriesTopViewComponent data={clubFilteredData} bounds={bounds} distanceType={distanceType} />
         </div>
         <div style={{ width: '30vw'}}>
-          <ScatterPlotComponent data={data} visibleClubTypes={visibleClubTypes} bounds={bounds} distanceType={distanceType} />
+          <ScatterPlotComponent data={clubFilteredData} bounds={bounds} distanceType={distanceType} />
         </div>
         <div style={{ width: '40vw'}}>
-          <BoxPlotComponent data={data} bounds={bounds} availableClubs={availableClubTypes} distanceType={distanceType}/>
-          <TrajectoriesSideViewComponent data={data} visibleClubTypes={visibleClubTypes} bounds={bounds} />
+          <BoxPlotComponent data={clubFilteredData} bounds={bounds} availableClubs={availableClubTypes} distanceType={distanceType}/>
+          <TrajectoriesSideViewComponent data={clubFilteredData} bounds={bounds} />
         </div>
       </div>
     </div>
