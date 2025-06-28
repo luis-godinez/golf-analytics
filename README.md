@@ -4,55 +4,48 @@
 
 ## Getting Started
 
-### Prerequisites
-
-Before getting started, ensure you have [Node.js](https://nodejs.org/) installed on your computer. This project uses `npm` (Node Package Manager), which comes bundled with Node.js.
-
-To check if you already have it installed, run:
+Before you begin, make sure you have [Node.js](https://nodejs.org/) installed (includes `npm`).  
+To check, run:
 ```
 node -v
 npm -v
 ```
+If not installed, download from [nodejs.org](https://nodejs.org).
 
-If not installed, download and install it from [https://nodejs.org](https://nodejs.org).
+### 1. Clone the repository
+```
+git clone https://github.com/luis-godinez/golf-analytics.git
+```
 
----
+### 2. Navigate to the project folder
+```
+cd golf-analytics
+```
 
-### 1. Install dependencies
-
-Run the following script in the project root to install both frontend and backend dependencies:
+### 3. Install dependencies
 ```
 npm run install:all
 ```
 
----
-
-### 2. Add Garmin CSV files
-
+### 4. Add Garmin CSV files
 Place your exported Garmin R50 CSV files in the `/CSVs` directory.
 
 To export these files:
 - Open a practice session in the Garmin Golf App.
 - Tap the three dots in the upper right corner and select **Export to CSV**.
-- Share the file to your computer via email or, if you’re using Apple devices, use AirDrop.
+- Share the file to your computer via email or AirDrop.
 
 **Notes:**
-- Files are ingested at server startup.
-- Adding files after the server has started will not refresh session data automatically — a server restart is required (this will be addressed in a future update).
-- Sessions are currently ordered by filename. For basic ordering, use a naming convention like `YY-MM-DD.csv` (e.g., `24-09-15.csv`). This is a temporary approach and will eventually be replaced with a proper in-memory database.
+- The database is updated at server startup.
+- Adding files after starting the server requires an app restart to refresh sessions (planned to improve in future updates).
+- Sessions are ordered by filename. For simple ordering, use a naming format like `YY-MM-DD.csv` (e.g., `24-09-15.csv`).
 
----
-
-### 3. Start the project
-
-Use the following command to start both the backend and frontend:
+### 5. Start the development server
 ```
 npm start
 ```
+The app will open at `http://localhost:3000`.
 
-This will auto-launch:
-- The backend server on `http://localhost:3001`
-- The frontend UI on `http://localhost:3000`
 
 ## Dashboard Capabilities
 
