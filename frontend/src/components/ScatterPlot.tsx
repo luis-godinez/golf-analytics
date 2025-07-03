@@ -214,7 +214,7 @@ const ScatterPlotComponent: React.FC<ScatterPlotProps> = ({ data, bounds, distan
     return () => {
       tooltip.remove();
     };
-  }, [data, grouped, yAxisField, dimensions, bounds]);
+  }, [data, grouped, yAxisField, dimensions, bounds, distanceType]);
 
   return (
     <div

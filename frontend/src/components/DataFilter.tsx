@@ -3,6 +3,45 @@ import { CLUB_TYPE_COLORS, CLUB_TYPE_ORDER } from "../constants/clubTypes";
 import { DistanceType, DISTANCE_TYPE_OPTIONS } from "../constants/distanceTypes";
 import { ShotQualityType, SHOT_QUALITY_OPTIONS } from "../constants/shotQualityTypes";
 
+function getFilterButtonStyle(
+  isSelected: boolean,
+  activeColor: string = "#000",
+  inactiveColor: string = "#999",
+  activeBg: string = "white",
+  inactiveBg: string = "#eee",
+  borderColor?: string,
+  opacity: number = 1
+): React.CSSProperties {
+  return {
+    padding: "4px 10px",
+    borderRadius: "999px",
+    backgroundColor: isSelected ? activeBg : inactiveBg,
+    color: isSelected ? activeColor : inactiveColor,
+    fontWeight: 600,
+    fontSize: "0.85rem",
+    border: `1px solid ${borderColor ?? (isSelected ? activeColor : "#ccc")}`,
+    userSelect: "none",
+    cursor: "pointer",
+    opacity,
+    lineHeight: "1",
+    height: "24px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+  };
+}
+
+const labelStyle: React.CSSProperties = {
+  fontSize: "0.85rem",
+  fontWeight: 600,
+  color: "#666",
+  lineHeight: "1",
+  height: "24px",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
 interface DataFilterProps {
   distanceType: DistanceType;
   setDistanceType: (type: DistanceType) => void;
@@ -46,23 +85,12 @@ const DataFilter: React.FC<DataFilterProps> = ({
       <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
         {showDistanceTypeToggle !== false && (
           <div style={filterContainerStyle}>
-            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#666" }}>Distance:</span>
+            <span style={labelStyle}>Distance:</span>
             {DISTANCE_TYPE_OPTIONS.map((type) => (
               <span
                 key={type}
                 onClick={() => setDistanceType(type)}
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: "999px",
-                  backgroundColor: distanceType === type ? "#00000020" : "#eee",
-                  color: distanceType === type ? "#000" : "#999",
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                  border: `1px solid ${distanceType === type ? "#000" : "#ccc"}`,
-                  userSelect: "none",
-                  cursor: "pointer",
-                  opacity: 1
-                }}
+                style={getFilterButtonStyle(distanceType === type)}
               >
                 {type}
               </span>
@@ -71,9 +99,9 @@ const DataFilter: React.FC<DataFilterProps> = ({
         )}
         {showShotQualityToggle && (
           <div style={filterContainerStyle}>
-            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#666" }}>Tag:</span>
+            <span style={labelStyle}>Tag:</span>
             {(availableShotQualities || SHOT_QUALITY_OPTIONS).map((quality) => {
-              const isSelected = shotQualities?.includes(quality);
+              const isSelected = !!shotQualities?.includes(quality);
               return (
                 <span
                   key={quality}
@@ -85,18 +113,7 @@ const DataFilter: React.FC<DataFilterProps> = ({
                       setShotQualities([...shotQualities, quality]);
                     }
                   }}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "999px",
-                    backgroundColor: isSelected ? "white" : "#eee",
-                    color: isSelected ? "#000" : "#999",
-                    fontWeight: 600,
-                    fontSize: "0.85rem",
-                    border: `1px solid ${isSelected ? "#000" : "#ccc"}`,
-                    userSelect: "none",
-                    cursor: "pointer",
-                    opacity: 1,
-                  }}
+                  style={getFilterButtonStyle(isSelected)}
                 >
                   {quality === "" ? "❓" : quality === "GOOD" ? "👍" : "👎"}
                 </span>
@@ -105,23 +122,12 @@ const DataFilter: React.FC<DataFilterProps> = ({
           </div>
         )}
         <div style={filterContainerStyle}>
-          <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#666" }}>Clubs:</span>
+          <span style={labelStyle}>Clubs:</span>
           <span
             onClick={() => {
               setVisibleClubTypes(allVisible ? [] : availableClubTypes);
             }}
-            style={{
-              padding: "4px 10px",
-              borderRadius: "999px",
-              backgroundColor: allVisible ? "white" : "#eee",
-              color: allVisible ? "#000" : "#999",
-              fontWeight: 600,
-              fontSize: "0.85rem",
-              border: `1px solid ${allVisible ? "#000" : "#ccc"}`,
-              userSelect: "none",
-              cursor: "pointer",
-              opacity: 1
-            }}
+            style={getFilterButtonStyle(allVisible)}
           >
             All/None
           </span>
@@ -138,18 +144,15 @@ const DataFilter: React.FC<DataFilterProps> = ({
                       : [...prev, club]
                   );
                 }}
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: "999px",
-                  backgroundColor: isVisible ? `${color}20` : "#eee",
-                  color: isVisible ? color : "#999",
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                  border: `1px solid ${isVisible ? color : "#ccc"}`,
-                  userSelect: "none",
-                  cursor: "pointer",
-                  opacity: isVisible ? 1 : 0.5
-                }}
+                style={getFilterButtonStyle(
+                  isVisible,
+                  color,
+                  "#999",
+                  `${color}20`,
+                  "#eee",
+                  color,
+                  isVisible ? 1 : 0.5
+                )}
               >
                 {club}
               </span>

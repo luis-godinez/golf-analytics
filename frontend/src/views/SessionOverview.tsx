@@ -6,7 +6,7 @@ import TrajectoriesTopViewComponent from "../components/TrajectoriesTopView";
 import { CLUB_TYPE_ORDER } from "../constants/clubTypes";
 import DataFilter from "../components/DataFilter";
 import { DistanceType, DEFAULT_DISTANCE_TYPE } from "../constants/distanceTypes";
-import { ShotQualityType, DEFAULT_SHOT_QUALITY_TYPE } from "../constants/shotQualityTypes";
+import { ShotQualityType } from "../constants/shotQualityTypes";
 
 interface OverviewProps {
   data: any[];
@@ -37,11 +37,7 @@ const SessionOverview: React.FC<OverviewProps> = ({ data, selectedDeviceType, un
       .catch((err) => console.error("Failed to load club types", err));
   }, []);
 
-  // Determine which shot qualities are available in this dataset
-  const hasGood = data.some((shot) => shot.Tag === "GOOD");
-  const hasBad = data.some((shot) => shot.Tag === "BAD");
-
-  const showShotQualityToggle = hasGood || hasBad;
+  const showShotQualityToggle = true;
 
   const filteredData = data.filter((shot) => {
     const tag = shot.Tag ?? "";
