@@ -117,7 +117,7 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
             setAnchorEl(null);
           }}
         >
-          Overview
+          Charts
         </MenuItem>
         <MenuItem
           onClick={() => {
