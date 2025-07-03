@@ -13,6 +13,8 @@ const Progression: React.FC = () => {
   const [visibleClubTypes, setVisibleClubTypes] = useState<string[]>(allClubTypes);
   const [distanceType, setDistanceType] = useState<DistanceType>(DEFAULT_DISTANCE_TYPE);
 
+  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchAvailableClubs = async () => {
       try {
@@ -30,7 +32,7 @@ const Progression: React.FC = () => {
   }, []);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", position: "relative" }}>
       <Box sx={{ flexShrink: 0 }}>
         <DataFilter
           distanceType={distanceType}
@@ -44,29 +46,69 @@ const Progression: React.FC = () => {
       </Box>
       <Box sx={{ flexGrow: 1, overflowY: "auto", overscrollBehavior: "contain" }}>
         <Grid p={2} container spacing={2} sx={{ background: "lightgray", borderRadius: "8px" }}>
-          <Grid item size={6}>
-            <AreaChart defaultMetric="Carry Distance" visibleClubTypes={visibleClubTypes} />
+          <Grid size={6}>
+            <AreaChart
+              defaultMetric="Carry Distance"
+              visibleClubTypes={visibleClubTypes}
+              hoveredDate={hoveredDate}
+              setHoveredDate={setHoveredDate}
+            />
           </Grid>
-          <Grid item size={6}>
-            <AreaChart defaultMetric="Carry Deviation Distance" visibleClubTypes={visibleClubTypes} />
+          <Grid size={6}>
+            <AreaChart
+              defaultMetric="Carry Deviation Distance"
+              visibleClubTypes={visibleClubTypes}
+              hoveredDate={hoveredDate}
+              setHoveredDate={setHoveredDate}
+            />
           </Grid>
-          <Grid item size={4}>
-            <AreaChart defaultMetric="Launch Direction" visibleClubTypes={visibleClubTypes} />
+          <Grid size={4}>
+            <AreaChart
+              defaultMetric="Launch Direction"
+              visibleClubTypes={visibleClubTypes}
+              hoveredDate={hoveredDate}
+              setHoveredDate={setHoveredDate}
+            />
           </Grid>
-          <Grid item size={4}>
-            <AreaChart defaultMetric="Launch Angle" visibleClubTypes={visibleClubTypes} />
+          <Grid size={4}>
+            <AreaChart
+              defaultMetric="Launch Angle"
+              visibleClubTypes={visibleClubTypes}
+              hoveredDate={hoveredDate}
+              setHoveredDate={setHoveredDate}
+            />
           </Grid>
-          <Grid item size={4}>
-            <AreaChart defaultMetric="Ball Speed" visibleClubTypes={visibleClubTypes} />
+          <Grid size={4}>
+            <AreaChart
+              defaultMetric="Ball Speed"
+              visibleClubTypes={visibleClubTypes}
+              hoveredDate={hoveredDate}
+              setHoveredDate={setHoveredDate}
+            />
           </Grid>
-          <Grid item size={4}>
-            <AreaChart defaultMetric="Backspin" visibleClubTypes={visibleClubTypes} />
+          <Grid size={4}>
+            <AreaChart
+              defaultMetric="Backspin"
+              visibleClubTypes={visibleClubTypes}
+              hoveredDate={hoveredDate}
+              setHoveredDate={setHoveredDate}
+            />
           </Grid>
-          <Grid item size={4}>
-            <AreaChart defaultMetric="Sidespin" visibleClubTypes={visibleClubTypes} />
+          <Grid size={4}>
+            <AreaChart
+              defaultMetric="Sidespin"
+              visibleClubTypes={visibleClubTypes}
+              hoveredDate={hoveredDate}
+              setHoveredDate={setHoveredDate}
+            />
           </Grid>
-          <Grid item size={4}>
-            <AreaChart defaultMetric="Spin Axis" visibleClubTypes={visibleClubTypes} />
+          <Grid size={4}>
+            <AreaChart
+              defaultMetric="Spin Axis"
+              visibleClubTypes={visibleClubTypes}
+              hoveredDate={hoveredDate}
+              setHoveredDate={setHoveredDate}
+            />
           </Grid>
         </Grid>
       </Box>

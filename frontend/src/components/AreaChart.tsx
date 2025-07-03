@@ -21,14 +21,18 @@ type Series = {
   data: DataPoint[];
 };
 
-const AreaChart: React.FC<{ defaultMetric: string; visibleClubTypes: string[] }> = ({ defaultMetric, visibleClubTypes }) => {
+type AreaChartProps = {
+  defaultMetric: string;
+  visibleClubTypes: string[];
+  hoveredDate: string | null;
+  setHoveredDate: (date: string | null) => void;
+};
+
+const AreaChart: React.FC<AreaChartProps> = ({ defaultMetric, visibleClubTypes, hoveredDate, setHoveredDate }) => {
   const [metric, setMetric] = useState(defaultMetric);
   const [seriesData, setSeriesData] = useState<Series[]>([]);
   const [units, setUnits] = useState("");
-  const [lastYDomain, setLastYDomain] = useState<[number, number] | null>(null);
-  const [lastXDomain, setLastXDomain] = useState<string[] | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const lastHoveredDate = useRef<string | null>(null);
 
   useEffect(() => {
     if (visibleClubTypes.length === 0) {
@@ -50,7 +54,6 @@ const AreaChart: React.FC<{ defaultMetric: string; visibleClubTypes: string[] }>
           return;
         }
       
-        // Removed filtering here because backend already filters by clubs
         setSeriesData(json.series);
         setUnits(json.units || "");
       };
@@ -70,58 +73,31 @@ const AreaChart: React.FC<{ defaultMetric: string; visibleClubTypes: string[] }>
     const innerHeight = height - margin.top - margin.bottom;
 
     const currentDates = Array.from(
-        new Set(seriesData.map(s => s.data).reduce((acc, arr) => acc.concat(arr.map(d => d.date)), [] as string[]))
-      ).sort();
-      
-    const allValues = seriesData.map(s => s.data).reduce((acc, arr) => acc.concat(arr.map(d => d.value)), [] as number[]);
+      new Set(seriesData.flatMap(s => s.data.map(d => d.date)))
+    ).sort();
+
+    const allValues = seriesData.flatMap(s => s.data.map(d => d.value));
     const minY = d3.min(allValues) ?? 0;
     const maxY = d3.max(allValues) ?? 1;
 
-    // Update lastXDomain and lastYDomain if data exists, but only if values actually changed
-    if (seriesData.length > 0) {
-      if (JSON.stringify(lastXDomain) !== JSON.stringify(currentDates)) {
-        setLastXDomain(currentDates);
-      }
-      if (!lastYDomain || lastYDomain[0] !== minY || lastYDomain[1] !== maxY) {
-        setLastYDomain([minY, maxY]);
-      }
-    }
-
     const x = d3.scalePoint<string>()
-      .domain(lastXDomain && seriesData.length === 0 ? lastXDomain : currentDates)
+      .domain(currentDates)
       .range([0, innerWidth]);
 
     const y = d3.scaleLinear()
-      .domain(lastYDomain && seriesData.length === 0 ? lastYDomain : [minY, maxY])
+      .domain([minY, maxY])
       .nice()
       .range([innerHeight, 0]);
 
     const color = d3.scaleOrdinal<string, string>(d3.schemeCategory10).domain(seriesData.map(d => d.club));
 
-    // Ensure only one tooltip div is created and reused
-    let tooltip = d3.select(svgRef.current!.parentNode as HTMLElement).select<HTMLDivElement>(".area-tooltip");
-    if (tooltip.empty()) {
-      tooltip = d3.select(svgRef.current!.parentNode as HTMLElement)
-        .append("div")
-        .attr("class", "area-tooltip")
-        .style("position", "absolute")
-        .style("background", "rgba(255, 255, 255, 0.9)")
-        .style("border", "1px solid #ccc")
-        .style("padding", "8px")
-        .style("border-radius", "4px")
-        .style("pointer-events", "none")
-        .style("opacity", 0);
-    }
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
     svg.on("mouseleave", () => {
-      tooltip.transition()
-        .duration(300)
-        .style("opacity", 0);
+      setHoveredDate(null);
       g.selectAll(".hover-point").remove();
-      lastHoveredDate.current = null;
+      g.selectAll(".tooltip-group").remove();
     });
-
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
     g.append("g")
       .attr("transform", `translate(0,${innerHeight})`)
@@ -136,13 +112,12 @@ const AreaChart: React.FC<{ defaultMetric: string; visibleClubTypes: string[] }>
       .attr("text-anchor", "middle")
       .attr("fill", "#333")
       .text(units);
-    // Style y-axis tick lines as light gray and extend across chart
+
     g.selectAll(".tick line")
       .attr("stroke", "#eee")
       .attr("x2", innerWidth);
 
-    // Draw horizontal zero line if 0 is within the y-domain
-    if ((lastYDomain && lastYDomain[0] < 0 && lastYDomain[1] > 0) || (minY < 0 && maxY > 0)) {
+    if (minY < 0 && maxY > 0) {
       g.append("line")
         .attr("x1", 0)
         .attr("x2", innerWidth)
@@ -153,7 +128,7 @@ const AreaChart: React.FC<{ defaultMetric: string; visibleClubTypes: string[] }>
     }
 
     if (seriesData.length === 0) {
-      return; // Axes and grid stay visible; no lines drawn
+      return;
     }
 
     const line = d3
@@ -171,15 +146,6 @@ const AreaChart: React.FC<{ defaultMetric: string; visibleClubTypes: string[] }>
         .attr("stroke", colorStroke)
         .attr("stroke-width", 1.5)
         .attr("d", line);
-
-      if (sorted.length > 0) {
-        g.append("text")
-          .attr("transform", `translate(${innerWidth},${y(sorted[sorted.length - 1].value)})`)
-          .attr("dy", "0.35em")
-          .attr("text-anchor", "end")
-          .attr("fill", colorStroke)
-          .text(s.club);
-      }
     });
 
     g.append("rect")
@@ -192,52 +158,81 @@ const AreaChart: React.FC<{ defaultMetric: string; visibleClubTypes: string[] }>
         const closestDate = x.domain().reduce((a, b) => {
           return Math.abs(x(b)! - mx) < Math.abs(x(a)! - mx) ? b : a;
         });
-
-        const tooltipLines = seriesData.map(s => {
-          const point = s.data.find(d => d.date === closestDate);
-          if (point) {
-            return `<div style="color: ${color(s.club)};"><strong>${s.club}:</strong> ${point.value.toFixed(1)} ${units}</div>`;
-          }
-          return null;
-        }).filter(Boolean).reverse();
-
-        if (tooltipLines.length > 0) {
-          tooltip.html(`<strong>${closestDate}</strong><br/>${tooltipLines.join("")}`)
-            .style("left", (event.pageX + 15) + "px")
-            .style("top", (event.pageY - 28) + "px")
-            .transition()
-            .duration(200)
-            .style("opacity", 1);
-
-          if (lastHoveredDate.current !== closestDate) {
-            g.selectAll(".hover-point").remove();
-
-            seriesData.forEach(s => {
-              const point = s.data.find(d => d.date === closestDate);
-              if (point) {
-                g.append("circle")
-                  .attr("class", "hover-point")
-                  .attr("cx", x(closestDate)!)
-                  .attr("cy", y(point.value))
-                  .attr("r", 4)
-                  .attr("fill", color(s.club)!);
-              }
-            });
-
-            lastHoveredDate.current = closestDate;
-          }
-        }
+        setHoveredDate(closestDate);
       })
       .on("mouseout", () => {
-        tooltip.transition()
-          .duration(300)
-          .style("opacity", 0);
-        g.selectAll(".hover-point").remove();
-        lastHoveredDate.current = null;
+        setHoveredDate(null);
       });
 
+    if (hoveredDate && currentDates.includes(hoveredDate)) {
+      g.selectAll(".hover-point").remove();
+      g.selectAll(".tooltip-group").remove();
+
+      const tooltipPoints = seriesData.map(s => {
+        const point = s.data.find(d => d.date === hoveredDate);
+        return point ? { club: s.club, value: point.value } : null;
+      }).filter(Boolean) as { club: string; value: number }[];
+
+      tooltipPoints.forEach(p => {
+        g.append("circle")
+          .attr("class", "hover-point")
+          .attr("cx", x(hoveredDate)!)
+          .attr("cy", y(p.value))
+          .attr("r", 4)
+          .attr("fill", color(p.club)!);
+      });
+
+      const cx = x(hoveredDate)!;
+      const cy = innerHeight / 2;
+      const padding = 80;
+
+      const group = g.append("g")
+        .attr("class", "tooltip-group")
+        .attr("transform", `translate(${cx}, ${cy})`);
+
+      group.append("text")
+        .attr("font-size", "14px")
+        .attr("y", 0)
+        .selectAll("tspan")
+        .data(tooltipPoints)
+        .join("tspan")
+        .attr("x", padding + 4)
+        .attr("dy", (_, i) => i === 0 ? "1em" : "1.2em")
+        .text(p => `${p.club}: ${p.value.toFixed(1)} ${units}`)
+        .attr("fill", p => color(p.club)!);
+
+      const textNode = group.select("text").node();
+      const bbox = textNode ? (textNode as SVGTextElement).getBBox() : { width: 120, height: 20 };
+
+      const tooltipWidth = bbox.width + 8;
+      const tooltipHeight = bbox.height + 8;
+
+      // If near right edge, shift tooltip box to the left
+      const tooltipX = (cx + margin.left + tooltipWidth + padding > innerWidth + margin.left)
+        ? -tooltipWidth - padding
+        : padding;
+
+      group.select("text").attr("y", -bbox.height / 2 );
+      group.select("text").selectAll("tspan").attr("x", tooltipX + 4);
+
+      group.append("rect")
+        .attr("x", tooltipX)
+        .attr("y", -tooltipHeight / 2)
+        .attr("width", tooltipWidth)
+        .attr("height", tooltipHeight)
+        .attr("fill", "white")
+        .attr("stroke", "#ccc")
+        .attr("rx", 4)
+        .attr("ry", 4);
+
+      group.select("rect").lower();
+    } else {
+      g.selectAll(".hover-point").remove();
+      g.selectAll(".tooltip-group").remove();
+    }
+
 // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seriesData, units]);
+  }, [seriesData, units, hoveredDate]);
 
   return (
     <Paper
@@ -250,6 +245,7 @@ const AreaChart: React.FC<{ defaultMetric: string; visibleClubTypes: string[] }>
         borderRadius: "8px",
         overflow: "hidden",
         p: 1,
+        position: "relative",
       }}
     >
       <FormControl fullWidth size="small" sx={{ mb: 1 }}>
