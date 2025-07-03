@@ -193,10 +193,11 @@ const AreaChart: React.FC<AreaChartProps> = ({ defaultMetric, visibleClubTypes, 
       group.append("text")
         .attr("font-size", "14px")
         .attr("y", 0)
+        .attr("text-anchor", "end") // Right-align text inside the tooltip
         .selectAll("tspan")
         .data(tooltipPoints)
         .join("tspan")
-        .attr("x", padding + 4)
+        .attr("x", padding + 4) // This will be updated after bbox calculation
         .attr("dy", (_, i) => i === 0 ? "1em" : "1.2em")
         .text(p => `${p.club}: ${p.value.toFixed(1)} ${units}`)
         .attr("fill", p => color(p.club)!);
@@ -213,7 +214,8 @@ const AreaChart: React.FC<AreaChartProps> = ({ defaultMetric, visibleClubTypes, 
         : padding;
 
       group.select("text").attr("y", -bbox.height / 2 );
-      group.select("text").selectAll("tspan").attr("x", tooltipX + 4);
+      group.select("text").selectAll("tspan")
+        .attr("x", tooltipX + tooltipWidth - 4); // Align text to right edge with padding
 
       group.append("rect")
         .attr("x", tooltipX)
