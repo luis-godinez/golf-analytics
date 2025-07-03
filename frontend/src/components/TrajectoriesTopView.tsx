@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { CLUB_TYPE_COLORS } from "../constants/clubTypes";
+import { drawGridAndAxes, appendClipPath, DEFAULT_MARGIN, calculateContentSize } from "./SharedPlotStyle";
 
 interface ShotData {
   totalDistance: number;
@@ -43,21 +44,13 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
       clubType: d["Club Type"]
     }));
 
-    const margin = { top: 40, right: 30, bottom: 70, left: 60 };
-    const w = containerWidth - margin.left - margin.right;
-    const h = containerHeight - margin.top - margin.bottom;
+    const margin = DEFAULT_MARGIN;
+    const { contentWidth, contentHeight } = calculateContentSize(containerWidth, containerHeight, margin);
 
-    const svg = d3.select(topView.current);
+    const svg = d3.select(topView.current as SVGSVGElement);
     svg.selectAll('*').remove();
 
-    svg.append("defs")
-      .append("clipPath")
-      .attr("id", "plot-area-clip")
-      .append("rect")
-      .attr("x", 0)
-      .attr("y", 0)
-      .attr("width", w)
-      .attr("height", h);
+    appendClipPath(svg, "plot-area-clip", contentWidth, contentHeight);
 
     const plotGroup = svg.append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
@@ -75,84 +68,21 @@ const TrajectoriesTopViewComponent: React.FC<TrajectoriesTopViewProps> = ({ data
       bounds[distanceType + " Distance"] ? bounds[distanceType + " Distance"].max : 0
     ];
 
-    const xScale = d3.scaleLinear().domain(xExtent).range([0, w]).nice();
-    const yScale = d3.scaleLinear().domain(yExtent).range([h, 0]).nice();
+    const xScale = d3.scaleLinear().domain(xExtent).range([0, contentWidth]).nice();
+    const yScale = d3.scaleLinear().domain(yExtent).range([contentHeight, 0]).nice();
 
-    // Draw axes
-    plotGroup.append('g')
-      .attr('transform', `translate(0,${h})`)
-      .call(d3.axisBottom(xScale))
-      .call(g => g.append('text')
-        .attr('x', w / 2)
-        .attr('y', 50)
-        .attr('fill', 'black')
-        .attr('text-anchor', 'middle')
-        .attr('font-weight', 'bold')
-        .style("font-size", "12px")
-        .text('Deviation (Yards)'));
-
-    plotGroup.append('g')
-      .call(d3.axisLeft(yScale).ticks(Math.ceil(yExtent[1] / 20)))
-      .call(g => g.append('text')
-        .attr('transform', 'rotate(-90)')
-        .attr('x', -h / 2)
-        .attr('y', -45)
-        .attr('fill', 'black')
-        .attr('text-anchor', 'middle')
-        .attr('font-weight', 'bold')
-        .style("font-size", "12px")
-        .text(`${distanceType} (Yards)`));
-
-    // Grid lines and reference circles
-    const yTicks = yScale.ticks(Math.ceil(yExtent[1] / 20));
-    clipGroup.selectAll(".horizontal-grid")
-      .data(yTicks)
-      .enter()
-      .append("line")
-      .attr("class", "horizontal-grid")
-      .attr("x1", 0)
-      .attr("x2", w)
-      .attr("y1", yScale)
-      .attr("y2", yScale)
-      .attr("stroke", "#ccc")
-      .attr("stroke-width", 1)
-      .attr("stroke-opacity", 0.5);
-
-    const maxYardage = yExtent[1];
-    const circleSteps = Math.floor(maxYardage / 50);
-    for (let i = 1; i <= circleSteps; i++) {
-      const ringYards = i * 50;
-      const radius = yScale(0) - yScale(ringYards);
-      clipGroup.append('circle')
-        .attr('cx', xScale(0))
-        .attr('cy', yScale(0))
-        .attr('r', radius)
-        .attr('stroke', 'black')
-        .attr('fill', 'none')
-        .attr('stroke-dasharray', '4 2');
-    }
-
-    // Add labels for concentric circles at every 50 yards (like ScatterPlot)
-    yScale.ticks().forEach((tick) => {
-      if (tick % 50 === 0 && tick !== 0) {
-        clipGroup.append("text")
-          .attr("x", w - 40)
-          .attr("y", yScale(tick) - 5)
-          .attr("fill", "#999")
-          .attr("font-size", 10)
-          .text(`${tick} yds`);
-      }
-    });
-
-    // Add vertical line at x = 0 (to match ScatterPlot)
-    clipGroup.append("line")
-      .attr("x1", xScale(0))
-      .attr("x2", xScale(0))
-      .attr("y1", 0)
-      .attr("y2", h)
-      .attr("stroke", "black")
-      .attr("stroke-width", 1)
-      .attr("stroke-opacity", 0.5);
+    // Use shared function to draw grid and axes, passing clipGroup as second argument
+    drawGridAndAxes(plotGroup, clipGroup, {
+      xScale,
+      yScale,
+      width: containerWidth,
+      height: containerHeight,
+      contentWidth,
+      contentHeight,
+      margin,
+      bounds,
+      distanceType
+    }, 'Deviation (Yards)', `${distanceType} (Yards)`);
 
     // Plot lines only if data
     if (parsedData.length > 0) {

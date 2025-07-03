@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
+import { drawGridAndAxes, appendClipPath, DEFAULT_MARGIN, calculateContentSize } from "./SharedPlotStyle";
 import { Matrix, EigenvalueDecomposition } from "ml-matrix";
 import { CLUB_TYPE_COLORS } from "../constants/clubTypes";
 
@@ -73,26 +74,17 @@ const ScatterPlotComponent: React.FC<ScatterPlotProps> = ({ data, bounds, distan
 
     const width = dimensions.width;
     const height = dimensions.height;
-    // Match margin to TrajectoriesTopView.tsx
-    const margin = { top: 40, right: 30, bottom: 70, left: 60 };
+    const margin = DEFAULT_MARGIN;
+
+    const { contentWidth, contentHeight } = calculateContentSize(width, height, margin);
 
     const svg = d3.select(scatterPlot.current);
     // Do not clear all elements, only clear points and ellipses to keep axes and grid
     svg.selectAll("circle").remove();
     svg.selectAll("ellipse").remove();
 
-    const contentWidth = width - margin.left - margin.right;
-    const contentHeight = height - margin.top - margin.bottom;
-
-    // Append defs and clipPath only if not present
-    if (svg.select("defs").empty()) {
-      svg.append("defs")
-        .append("clipPath")
-        .attr("id", "plot-area-clip")
-        .append("rect")
-        .attr("width", contentWidth)
-        .attr("height", contentHeight);
-    }
+    // Append defs and clipPath using shared function
+    appendClipPath(svg, "plot-area-clip", contentWidth, contentHeight);
 
     // Scales based on bounds
     const allPoints: Point[] = Object.values(grouped).flat();
@@ -125,135 +117,28 @@ const ScatterPlotComponent: React.FC<ScatterPlotProps> = ({ data, bounds, distan
     if (plotGroup.empty()) {
       svg.append("g").attr("class", "plot-group").attr("transform", `translate(${margin.left},${margin.top})`);
     }
-    const plotG = svg.select("g.plot-group");
+    const plotG = svg.select<SVGGElement>("g.plot-group");
+    // Clear the plot group to avoid overlapping charts
+    plotG.selectAll("*").remove();
 
     const clipGroup = plotG.select("g.clip-group");
     if (clipGroup.empty()) {
       plotG.append("g").attr("class", "clip-group").attr("clip-path", "url(#plot-area-clip)");
     }
-    const clipG = plotG.select("g.clip-group");
+    const clipG = plotG.select<SVGGElement>("g.clip-group");
 
-    // Remove old grid and circles
-    clipG.selectAll("circle.grid-circle").remove();
-    clipG.selectAll("line.grid-line").remove();
-    clipG.selectAll("line.zero-line").remove();
-
-    const maxY = yAbsMax;
-    const radiusStep = 50;
-
-    // Draw reference circles
-    for (let r = radiusStep; r <= maxY; r += radiusStep) {
-      const radius = yScale(0) - yScale(r);
-      clipG.append("circle")
-        .attr("class", "grid-circle")
-        .attr("cx", xScale(0))
-        .attr("cy", yScale(0))
-        .attr("r", radius)
-        .attr("stroke", "black")
-        .attr("fill", "none")
-        .attr("stroke-dasharray", "4 2");
-
-      clipG.append("text")
-        .attr("x", xScale(0))
-        .attr("y", yScale(r) - 4)
-        .attr("text-anchor", "middle")
-        .style("font-size", "10px")
-        .style("fill", "#666")
-        .text(`${r}`);
-    }
-
-    // Horizontal grid lines
-    clipG.selectAll(".grid-line")
-      .data(yScale.ticks())
-      .join("line")
-      .attr("class", "grid-line")
-      .attr("x1", 0)
-      .attr("x2", contentWidth)
-      .attr("y1", d => yScale(d))
-      .attr("y2", d => yScale(d))
-      .attr("stroke", "#ccc")
-      .attr("stroke-width", 1)
-      .attr("stroke-opacity", 0.5);
-
-    // Vertical line at x=0
-    clipG.append("line")
-      .attr("class", "zero-line")
-      .attr("x1", xScale(0))
-      .attr("x2", xScale(0))
-      .attr("y1", 0)
-      .attr("y2", contentHeight)
-      .attr("stroke", "black")
-      .attr("stroke-width", 1)
-      .attr("stroke-opacity", 0.5);
-
-    // Remove old axes
-    plotG.selectAll("g.x-axis").remove();
-    plotG.selectAll("g.y-axis").remove();
-    plotG.selectAll("text.x-label").remove();
-    plotG.selectAll("text.x-left-label").remove();
-    plotG.selectAll("text.x-right-label").remove();
-    plotG.selectAll("text.y-label").remove();
-
-    // Add X axis
-    plotG.append("g")
-      .attr("class", "x-axis axis")
-      .attr("transform", `translate(0,${yScale(0)})`)
-      .call(
-        d3.axisBottom(xScale)
-          .ticks(Math.ceil((xAbsMax * 2) / 10))
-          .tickFormat(d => `${d}`)
-      );
-
-    // Add x-axis direction labels
-    plotG.append("text")
-      .attr("class", "x-left-label")
-      .attr("x", 10)
-      .attr("y", yScale(0) - 10)
-      .attr("text-anchor", "start")
-      .style("font-size", "12px")
-      .style("fill", "#666")
-      .text("Left");
-
-    plotG.append("text")
-      .attr("class", "x-right-label")
-      .attr("x", contentWidth - 10 )
-      .attr("y", yScale(0) - 10)
-      .attr("text-anchor", "end")
-      .style("font-size", "12px")
-      .style("fill", "#666")
-      .text("Right");
-
-    // Add X-axis label
-    plotG.append("text")
-      .attr("class", "x-label")
-      .attr("x", contentWidth / 2)
-      .attr("y", yScale(0) + 50)
-      .attr("fill", "black")
-      .attr("text-anchor", "middle")
-      .attr("font-weight", "bold")
-      .style("font-size", "12px")
-      .text("Deviation (Yards)");
-
-    // Add Y axis
-    plotG.append("g")
-      .attr("class", "y-axis axis")
-      .call(
-        d3.axisLeft(yScale)
-          .ticks(Math.ceil(yAbsMax / 20))
-          .tickFormat(d => `${d}`)
-      );
-
-    // Add Y-axis label
-    plotG.append("text")
-      .attr("class", "y-label")
-      .attr("transform", "rotate(-90)")
-      .attr("x", -contentHeight / 2)
-      .attr("y", -45)
-      .attr("fill", "black")
-      .attr("text-anchor", "middle")
-      .attr("font-weight", "bold")
-      .style("font-size", "12px")
-      .text(`${yAxisField.replace(" Distance", "")} (Yards)`);
+    // Draw grid and axes using shared function
+    drawGridAndAxes(plotG, clipG, {
+      xScale,
+      yScale,
+      width,
+      height,
+      contentWidth,
+      contentHeight,
+      margin,
+      bounds,
+      distanceType
+    }, "Deviation (Yards)", `${yAxisField.replace(" Distance", "")} (Yards)`);
 
     // If no data, skip plotting points and ellipses
     if (!data || data.length === 0) {
