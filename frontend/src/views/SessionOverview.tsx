@@ -20,7 +20,7 @@ const SessionOverview: React.FC<OverviewProps> = ({ data, selectedDeviceType, un
   const [availableClubTypes, setAvailableClubTypes] = useState<string[]>([]);
   const [bounds, setBounds] = useState<Record<string, { min: number; max: number }>>({});
   const [distanceType, setDistanceType] = useState<DistanceType>(DEFAULT_DISTANCE_TYPE);
-  const [shotQuality, setShotQuality] = useState<ShotQualityType>(DEFAULT_SHOT_QUALITY_TYPE);
+  const [shotQualities, setShotQualities] = useState<ShotQualityType[]>(["", "GOOD", "BAD"]);
 
   useEffect(() => {
     setVisibleClubTypes(CLUB_TYPE_ORDER);
@@ -38,22 +38,14 @@ const SessionOverview: React.FC<OverviewProps> = ({ data, selectedDeviceType, un
   }, []);
 
   // Determine which shot qualities are available in this dataset
-  const availableShotQualities: ShotQualityType[] = [""];
-
   const hasGood = data.some((shot) => shot.Tag === "GOOD");
   const hasBad = data.some((shot) => shot.Tag === "BAD");
-
-  if (hasGood) availableShotQualities.push("GOOD");
-  if (hasBad) availableShotQualities.push("BAD");
 
   const showShotQualityToggle = hasGood || hasBad;
 
   const filteredData = data.filter((shot) => {
-    if (shotQuality === "") return true;
-    if (shotQuality === "GOOD") return shot.Tag === "GOOD";
-    if (shotQuality === "BAD") return shot.Tag === "BAD";
-    // Default fallback: include shots with empty Note if needed
-    return shot.Tag === "" || shot.Tag === undefined;
+    const tag = shot.Tag ?? "";
+    return shotQualities.includes(tag);
   });
 
   const clubFilteredData = React.useMemo(() => {
@@ -71,10 +63,9 @@ const SessionOverview: React.FC<OverviewProps> = ({ data, selectedDeviceType, un
         visibleClubTypes={visibleClubTypes}
         setVisibleClubTypes={setVisibleClubTypes}
         availableClubTypes={availableClubTypes}
-        shotQuality={shotQuality}
-        setShotQuality={setShotQuality}
+        shotQualities={shotQualities}
+        setShotQualities={setShotQualities}
         showShotQualityToggle={showShotQualityToggle}
-        availableShotQualities={availableShotQualities}
       />
       <div
         style={{

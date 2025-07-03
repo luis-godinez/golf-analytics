@@ -5,9 +5,7 @@ import Progression from "./views/Progression";
 import SessionOverview from "./views/SessionOverview";
 import SessionData from "./views/SessionData";
 
-function SessionDetail({ csvData, units, filename, selectedDevice, onBack }: any) {
-  const [detailTab, setDetailTab] = useState<"overview" | "data">("overview");
-
+function SessionDetail({ csvData, units, filename, selectedDevice, onBack, detailTab, setDetailTab }: any) {
   return (
     <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
@@ -60,6 +58,7 @@ function App() {
   const [sessionList, setSessionList] = useState<string[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [detailTab, setDetailTab] = useState<"overview" | "data">("overview");
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
@@ -155,10 +154,11 @@ function App() {
       <Box sx={{ flexGrow: 1, overflow: "auto", display: "flex", flexDirection: "column", p: 2 }}>
         {activeMainTab === "sessions" && !filename && (
           <Sessions
-            onSessionLoad={(data, units, file) => {
+            onSessionLoad={(data, units, file, initialTab = "overview") => {
               setCsvData(data);
               setUnits(units);
               setFilename(file);
+              setDetailTab(initialTab);
             }}
             onSessionListUpdate={(filenames: string[]) => {
               setSessionList(filenames);
@@ -172,6 +172,8 @@ function App() {
             units={units}
             filename={filename}
             selectedDevice={selectedDevice}
+            detailTab={detailTab}
+            setDetailTab={setDetailTab}
             onBack={() => setFilename("")}
           />
         )}

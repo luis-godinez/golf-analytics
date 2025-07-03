@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 
 interface SessionsProps {
-  onSessionLoad: (data: any[], units: Record<string, string>, filename: string) => void;
+  onSessionLoad: (data: any[], units: Record<string, string>, filename: string, initialTab?: "overview" | "data") => void;
   onSessionListUpdate: (filenames: string[], allClubTypes: string[]) => void;
 }
 
@@ -43,11 +43,11 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
     setPage(newPage);
   };
 
-  const handleLoadSession = async (filename: string) => {
+  const handleLoadSession = async (filename: string, initialTab?: "overview" | "data") => {
     try {
       const res = await fetch(`http://localhost:3001/sessions/${filename}`);
       const json = await res.json();
-      onSessionLoad(json.data, json.units || {}, filename);
+      onSessionLoad(json.data, json.units || {}, filename, initialTab);
     } catch (err) {
       console.error("Failed to load session data", err);
     }
@@ -112,7 +112,7 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
         <MenuItem
           onClick={() => {
             if (selectedSession) {
-              handleLoadSession(selectedSession);
+              handleLoadSession(selectedSession, "overview");
             }
             setAnchorEl(null);
           }}
@@ -122,7 +122,7 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
         <MenuItem
           onClick={() => {
             if (selectedSession) {
-              handleLoadSession(selectedSession);
+              handleLoadSession(selectedSession, "data");
             }
             setAnchorEl(null);
           }}

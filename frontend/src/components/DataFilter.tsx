@@ -11,8 +11,8 @@ interface DataFilterProps {
   availableClubTypes: string[];
   showDistanceTypeToggle?: boolean;
   showShotQualityToggle: boolean;
-  shotQuality?: ShotQualityType;
-  setShotQuality?: (quality: ShotQualityType) => void;
+  shotQualities?: ShotQualityType[];
+  setShotQualities?: (qualities: ShotQualityType[]) => void;
   availableShotQualities?: ShotQualityType[];
 }
 
@@ -35,8 +35,8 @@ const DataFilter: React.FC<DataFilterProps> = ({
   availableClubTypes,
   showDistanceTypeToggle,
   showShotQualityToggle,
-  shotQuality,
-  setShotQuality,
+  shotQualities,
+  setShotQualities,
   availableShotQualities,
 }) => {
   const allVisible = visibleClubTypes.length === availableClubTypes.length;
@@ -72,26 +72,36 @@ const DataFilter: React.FC<DataFilterProps> = ({
         {showShotQualityToggle && (
           <div style={filterContainerStyle}>
             <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#666" }}>Tag:</span>
-            {(availableShotQualities || SHOT_QUALITY_OPTIONS).map((quality) => (
-              <span
-                key={quality}
-                onClick={() => setShotQuality?.(quality)}
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: "999px",
-                  backgroundColor: shotQuality === quality ? "white" : "#eee",
-                  color: shotQuality === quality ? "#000" : "#999",
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                  border: `1px solid ${shotQuality === quality ? "#000" : "#ccc"}`,
-                  userSelect: "none",
-                  cursor: "pointer",
-                  opacity: 1,
-                }}
-              >
-                {quality === "" ? "Any" : quality === "GOOD" ? "👍🏻" : "👎🏻"}
-              </span>
-            ))}
+            {(availableShotQualities || SHOT_QUALITY_OPTIONS).map((quality) => {
+              const isSelected = shotQualities?.includes(quality);
+              return (
+                <span
+                  key={quality}
+                  onClick={() => {
+                    if (!setShotQualities || !shotQualities) return;
+                    if (isSelected) {
+                      setShotQualities(shotQualities.filter((q) => q !== quality));
+                    } else {
+                      setShotQualities([...shotQualities, quality]);
+                    }
+                  }}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "999px",
+                    backgroundColor: isSelected ? "white" : "#eee",
+                    color: isSelected ? "#000" : "#999",
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    border: `1px solid ${isSelected ? "#000" : "#ccc"}`,
+                    userSelect: "none",
+                    cursor: "pointer",
+                    opacity: 1,
+                  }}
+                >
+                  {quality === "" ? "❓" : quality === "GOOD" ? "👍" : "👎"}
+                </span>
+              );
+            })}
           </div>
         )}
         <div style={filterContainerStyle}>
