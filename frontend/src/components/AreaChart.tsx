@@ -64,11 +64,11 @@ const AreaChart: React.FC<AreaChartProps> = ({ defaultMetric, visibleClubTypes, 
     if (!svgRef.current) return;
 
     const svg = d3.select(svgRef.current);
-    const width = svgRef.current.clientWidth;
-    const height = svgRef.current.clientHeight;
     svg.selectAll("*").remove();
 
     const margin = { top: 20, right: 30, bottom: 30, left: 60 };
+    const width = svgRef.current.clientWidth;
+    const height = svgRef.current.clientHeight;
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
@@ -82,7 +82,8 @@ const AreaChart: React.FC<AreaChartProps> = ({ defaultMetric, visibleClubTypes, 
 
     const x = d3.scalePoint<string>()
       .domain(currentDates)
-      .range([0, innerWidth]);
+      .range([0, innerWidth])
+      .padding(0.5);
 
     const y = d3.scaleLinear()
       .domain([minY, maxY])
@@ -93,17 +94,12 @@ const AreaChart: React.FC<AreaChartProps> = ({ defaultMetric, visibleClubTypes, 
 
     const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-    svg.on("mouseleave", () => {
-      setHoveredDate(null);
-      g.selectAll(".hover-point").remove();
-      g.selectAll(".tooltip-group").remove();
-    });
-
     g.append("g")
       .attr("transform", `translate(0,${innerHeight})`)
-      .call(d3.axisBottom(x).tickFormat(d => d));
+      .call(d3.axisBottom(x));
 
     g.append("g").call(d3.axisLeft(y));
+
     g.append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", -margin.left + 30)
@@ -127,10 +123,6 @@ const AreaChart: React.FC<AreaChartProps> = ({ defaultMetric, visibleClubTypes, 
         .attr("stroke-width", 1);
     }
 
-    if (seriesData.length === 0) {
-      return;
-    }
-
     const line = d3
       .line<DataPoint>()
       .x(d => x(d.date)!)
@@ -148,6 +140,11 @@ const AreaChart: React.FC<AreaChartProps> = ({ defaultMetric, visibleClubTypes, 
         .attr("d", line);
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const hoverPointsGroup = g.append("g").attr("class", "hover-points-group");
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const tooltipGroup = g.append("g").attr("class", "tooltip-group");
+
     g.append("rect")
       .attr("width", innerWidth)
       .attr("height", innerHeight)
@@ -158,83 +155,115 @@ const AreaChart: React.FC<AreaChartProps> = ({ defaultMetric, visibleClubTypes, 
         const closestDate = x.domain().reduce((a, b) => {
           return Math.abs(x(b)! - mx) < Math.abs(x(a)! - mx) ? b : a;
         });
-        setHoveredDate(closestDate);
+        if (closestDate !== hoveredDate) {
+          setHoveredDate(closestDate);
+        }
       })
       .on("mouseout", () => {
         setHoveredDate(null);
       });
+// eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seriesData, units]);
 
-    if (hoveredDate && currentDates.includes(hoveredDate)) {
-      g.selectAll(".hover-point").remove();
-      g.selectAll(".tooltip-group").remove();
+  useEffect(() => {
+    if (!svgRef.current) return;
 
-      const tooltipPoints = seriesData.map(s => {
-        const point = s.data.find(d => d.date === hoveredDate);
+    const svg = d3.select(svgRef.current);
+    const g = svg.select("g");
+    const hoverPointsGroup = g.select<SVGGElement>(".hover-points-group");
+    const tooltipGroup = g.select<SVGGElement>(".tooltip-group");
+
+    hoverPointsGroup.selectAll("*").remove();
+    tooltipGroup.selectAll("*").remove();
+
+    const margin = { top: 20, right: 30, bottom: 30, left: 60 };
+    const width = svgRef.current.clientWidth;
+    const height = svgRef.current.clientHeight;
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+
+    const currentDates = Array.from(
+      new Set(seriesData.flatMap(s => s.data.map(d => d.date)))
+    ).sort();
+
+    if (!hoveredDate || !currentDates.includes(hoveredDate)) return;
+
+    const x = d3.scalePoint<string>()
+      .domain(currentDates)
+      .range([0, innerWidth])
+      .padding(0.5);
+
+    const allValues = seriesData.flatMap(s => s.data.map(d => d.value));
+    const minY = d3.min(allValues) ?? 0;
+    const maxY = d3.max(allValues) ?? 1;
+
+    const y = d3.scaleLinear()
+      .domain([minY, maxY])
+      .nice()
+      .range([innerHeight, 0]);
+
+    const color = d3.scaleOrdinal<string, string>(d3.schemeCategory10).domain(seriesData.map(d => d.club));
+
+    const tooltipPoints = seriesData
+      .map((s) => {
+        const point = s.data.find((d) => d.date === hoveredDate);
         return point ? { club: s.club, value: point.value } : null;
-      }).filter(Boolean) as { club: string; value: number }[];
+      })
+      .filter(Boolean) as { club: string; value: number }[];
 
-      tooltipPoints.forEach(p => {
-        g.append("circle")
-          .attr("class", "hover-point")
-          .attr("cx", x(hoveredDate)!)
-          .attr("cy", y(p.value))
-          .attr("r", 4)
-          .attr("fill", color(p.club)!);
-      });
+    tooltipPoints.forEach((p) => {
+      hoverPointsGroup
+        .append("circle")
+        .attr("class", "hover-point")
+        .attr("cx", x(hoveredDate)!)
+        .attr("cy", y(p.value))
+        .attr("r", 4)
+        .attr("fill", color(p.club)!);
+    });
 
-      const cx = x(hoveredDate)!;
-      const cy = innerHeight / 2;
-      const padding = 80;
+    const cx = x(hoveredDate)!;
+    const cy = innerHeight / 2;
+    const padding = 50;
 
-      const group = g.append("g")
-        .attr("class", "tooltip-group")
-        .attr("transform", `translate(${cx}, ${cy})`);
+    const group = tooltipGroup.append("g").attr("transform", `translate(${cx}, ${cy})`);
 
-      group.append("text")
-        .attr("font-size", "14px")
-        .attr("y", 0)
-        .attr("text-anchor", "end") // Right-align text inside the tooltip
-        .selectAll("tspan")
-        .data(tooltipPoints)
-        .join("tspan")
-        .attr("x", padding + 4) // This will be updated after bbox calculation
-        .attr("dy", (_, i) => i === 0 ? "1em" : "1.2em")
-        .text(p => `${p.club}: ${p.value.toFixed(1)} ${units}`)
-        .attr("fill", p => color(p.club)!);
+    group.append("text")
+      .attr("font-size", "14px")
+      .attr("y", 0)
+      .attr("text-anchor", "end")
+      .selectAll("tspan")
+      .data(tooltipPoints)
+      .join("tspan")
+      .attr("x", padding + 4)
+      .attr("dy", (_, i) => (i === 0 ? "1em" : "1.2em"))
+      .text((p) => `${p.club}: ${p.value.toFixed(1)} ${units}`)
+      .attr("fill", (p) => color(p.club)!);
 
-      const textNode = group.select("text").node();
-      const bbox = textNode ? (textNode as SVGTextElement).getBBox() : { width: 120, height: 20 };
-
-      const tooltipWidth = bbox.width + 8;
-      const tooltipHeight = bbox.height + 8;
-
-      // If near right edge, shift tooltip box to the left
-      const tooltipX = (cx + margin.left + tooltipWidth + padding > innerWidth + margin.left)
+    const textNode = group.select("text").node();
+    const bbox = textNode ? (textNode as SVGTextElement).getBBox() : { width: 120, height: 20 };
+    const tooltipWidth = bbox.width + 8;
+    const tooltipHeight = bbox.height + 8;
+    const tooltipX =
+      cx + margin.left + tooltipWidth + padding > innerWidth + margin.left
         ? -tooltipWidth - padding
         : padding;
 
-      group.select("text").attr("y", -bbox.height / 2 );
-      group.select("text").selectAll("tspan")
-        .attr("x", tooltipX + tooltipWidth - 4); // Align text to right edge with padding
+    group.select("text").attr("y", -bbox.height / 2);
+    group.select("text").selectAll("tspan").attr("x", tooltipX + tooltipWidth - 4);
 
-      group.append("rect")
-        .attr("x", tooltipX)
-        .attr("y", -tooltipHeight / 2)
-        .attr("width", tooltipWidth)
-        .attr("height", tooltipHeight)
-        .attr("fill", "white")
-        .attr("stroke", "#ccc")
-        .attr("rx", 4)
-        .attr("ry", 4);
+    group.append("rect")
+      .attr("x", tooltipX)
+      .attr("y", -tooltipHeight / 2)
+      .attr("width", tooltipWidth)
+      .attr("height", tooltipHeight)
+      .attr("fill", "white")
+      .attr("stroke", "#ccc")
+      .attr("rx", 4)
+      .attr("ry", 4);
 
-      group.select("rect").lower();
-    } else {
-      g.selectAll(".hover-point").remove();
-      g.selectAll(".tooltip-group").remove();
-    }
-
+    group.select("rect").lower();
 // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seriesData, units, hoveredDate]);
+  }, [hoveredDate, seriesData, units]);
 
   return (
     <Paper
