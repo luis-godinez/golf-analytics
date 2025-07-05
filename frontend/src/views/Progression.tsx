@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AreaChart from "../components/AreaChart";
-import { Box } from "@mui/material";
+import { Box, Alert } from "@mui/material";
 import { Grid as MuiGrid } from "@mui/material";
 import DataFilter from "../components/DataFilter";
 import { DistanceType, DEFAULT_DISTANCE_TYPE } from "../constants/distanceTypes";
@@ -34,83 +34,95 @@ const Progression: React.FC = () => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", position: "relative" }}>
       <Box sx={{ flexShrink: 0 }}>
-        <DataFilter
-          distanceType={distanceType}
-          setDistanceType={setDistanceType}
-          visibleClubTypes={visibleClubTypes}
-          setVisibleClubTypes={setVisibleClubTypes}
-          availableClubTypes={allClubTypes}
-          showDistanceTypeToggle={false}
-          showShotQualityToggle={false}
-        />
+        {allClubTypes.length > 0 && (
+          <DataFilter
+            distanceType={distanceType}
+            setDistanceType={setDistanceType}
+            visibleClubTypes={visibleClubTypes}
+            setVisibleClubTypes={setVisibleClubTypes}
+            availableClubTypes={allClubTypes}
+            showDistanceTypeToggle={false}
+            showShotQualityToggle={false}
+          />
+        )}
       </Box>
       <Box sx={{ flexGrow: 1, overflowY: "auto", overscrollBehavior: "contain" }}>
-        <Grid p={2} container spacing={2} sx={{ background: "lightgray", borderRadius: "8px" }}>
-          <Grid size={6}>
-            <AreaChart
-              defaultMetric="Carry Distance"
-              visibleClubTypes={visibleClubTypes}
-              hoveredDate={hoveredDate}
-              setHoveredDate={setHoveredDate}
-            />
+        {visibleClubTypes.length > 0 ? (
+          <Grid p={2} container spacing={2} sx={{ background: "lightgray", borderRadius: "8px" }}>
+            <Grid size={6}>
+              <AreaChart
+                defaultMetric="Carry Distance"
+                visibleClubTypes={visibleClubTypes}
+                hoveredDate={hoveredDate}
+                setHoveredDate={setHoveredDate}
+              />
+            </Grid>
+            <Grid size={6}>
+              <AreaChart
+                defaultMetric="Carry Deviation Distance"
+                visibleClubTypes={visibleClubTypes}
+                hoveredDate={hoveredDate}
+                setHoveredDate={setHoveredDate}
+              />
+            </Grid>
+            <Grid size={4}>
+              <AreaChart
+                defaultMetric="Launch Direction"
+                visibleClubTypes={visibleClubTypes}
+                hoveredDate={hoveredDate}
+                setHoveredDate={setHoveredDate}
+              />
+            </Grid>
+            <Grid size={4}>
+              <AreaChart
+                defaultMetric="Launch Angle"
+                visibleClubTypes={visibleClubTypes}
+                hoveredDate={hoveredDate}
+                setHoveredDate={setHoveredDate}
+              />
+            </Grid>
+            <Grid size={4}>
+              <AreaChart
+                defaultMetric="Ball Speed"
+                visibleClubTypes={visibleClubTypes}
+                hoveredDate={hoveredDate}
+                setHoveredDate={setHoveredDate}
+              />
+            </Grid>
+            <Grid size={4}>
+              <AreaChart
+                defaultMetric="Backspin"
+                visibleClubTypes={visibleClubTypes}
+                hoveredDate={hoveredDate}
+                setHoveredDate={setHoveredDate}
+              />
+            </Grid>
+            <Grid size={4}>
+              <AreaChart
+                defaultMetric="Sidespin"
+                visibleClubTypes={visibleClubTypes}
+                hoveredDate={hoveredDate}
+                setHoveredDate={setHoveredDate}
+              />
+            </Grid>
+            <Grid size={4}>
+              <AreaChart
+                defaultMetric="Spin Axis"
+                visibleClubTypes={visibleClubTypes}
+                hoveredDate={hoveredDate}
+                setHoveredDate={setHoveredDate}
+              />
+            </Grid>
           </Grid>
-          <Grid size={6}>
-            <AreaChart
-              defaultMetric="Carry Deviation Distance"
-              visibleClubTypes={visibleClubTypes}
-              hoveredDate={hoveredDate}
-              setHoveredDate={setHoveredDate}
-            />
-          </Grid>
-          <Grid size={4}>
-            <AreaChart
-              defaultMetric="Launch Direction"
-              visibleClubTypes={visibleClubTypes}
-              hoveredDate={hoveredDate}
-              setHoveredDate={setHoveredDate}
-            />
-          </Grid>
-          <Grid size={4}>
-            <AreaChart
-              defaultMetric="Launch Angle"
-              visibleClubTypes={visibleClubTypes}
-              hoveredDate={hoveredDate}
-              setHoveredDate={setHoveredDate}
-            />
-          </Grid>
-          <Grid size={4}>
-            <AreaChart
-              defaultMetric="Ball Speed"
-              visibleClubTypes={visibleClubTypes}
-              hoveredDate={hoveredDate}
-              setHoveredDate={setHoveredDate}
-            />
-          </Grid>
-          <Grid size={4}>
-            <AreaChart
-              defaultMetric="Backspin"
-              visibleClubTypes={visibleClubTypes}
-              hoveredDate={hoveredDate}
-              setHoveredDate={setHoveredDate}
-            />
-          </Grid>
-          <Grid size={4}>
-            <AreaChart
-              defaultMetric="Sidespin"
-              visibleClubTypes={visibleClubTypes}
-              hoveredDate={hoveredDate}
-              setHoveredDate={setHoveredDate}
-            />
-          </Grid>
-          <Grid size={4}>
-            <AreaChart
-              defaultMetric="Spin Axis"
-              visibleClubTypes={visibleClubTypes}
-              hoveredDate={hoveredDate}
-              setHoveredDate={setHoveredDate}
-            />
-          </Grid>
-        </Grid>
+        ) : (
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+            <Box sx={{ maxWidth: 400, width: "100%" }}>
+              <Alert severity="warning" variant="outlined">
+                Upload 2 or more sessions to see progression charts.
+              </Alert>
+            </Box>
+          </Box>
+        )}
       </Box>
     </Box>
   );
