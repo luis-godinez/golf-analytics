@@ -1,6 +1,4 @@
 import express from "express";
-import { extractSessionMetadata } from "../utils/extractSessions.js";
-import { computeGlobalStats } from "../utils/aggregateSessions.js";
 import { computeProgressionSummary } from "../utils/progressionSummary.js";
 import db from "../utils/db.js";
 
@@ -10,23 +8,10 @@ router.get("/", async (req, res) => {
   try {
     await db.read();
     const sessions = db.data.sessions || [];
-    const results = sessions.map(session =>
-      extractSessionMetadata(session.filename, session.data)
-    );
-    res.json(results);
+    res.json(sessions);
   } catch (error) {
     console.error("Failed to load sessions:", error);
     res.status(500).json({ error: "Failed to load sessions" });
-  }
-});
-
-router.get("/bounds", async (req, res) => {
-  try {
-    const globalStats = await computeGlobalStats();
-    res.json(globalStats);
-  } catch (error) {
-    console.error("Failed to compute global stats:", error);
-    res.status(500).json({ error: "Failed to compute global stats" });
   }
 });
 
@@ -41,25 +26,23 @@ router.get("/progression-summary", async (req, res) => {
   }
 });
 
-// Route to fetch parsed CSV data by filename from DB
-router.get("/:filename", async (req, res) => {
+// Route to fetch session data by sessionId
+router.get("/:sessionId", async (req, res) => {
   try {
-    const { filename } = req.params;
-    if (!filename.endsWith(".csv")) {
-      return res.status(400).json({ error: "Invalid file type requested" });
-    }
+    const { sessionId } = req.params;
     await db.read();
-    const session = db.data.sessions.find(s => s.filename === filename);
+    const session = db.data.sessions.find(s => s.id === sessionId);
     if (!session) {
       return res.status(404).json({ error: "Session not found" });
     }
+    const shots = db.data.shots.filter(shot => shot.sessionId === sessionId);
     res.json({
-      data: session.data,
+      shots,
       units: session.units
     });
   } catch (error) {
-    console.error("Failed to load session file:", error);
-    res.status(500).json({ error: "Failed to load session file" });
+    console.error("Failed to load session data:", error);
+    res.status(500).json({ error: "Failed to load session data" });
   }
 });
 
