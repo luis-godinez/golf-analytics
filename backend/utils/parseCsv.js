@@ -12,7 +12,7 @@ export function parseGarminR50Csv(filePath) {
       .on("end", () => {
         if (rows.length < 3) return reject(new Error("CSV must have at least three rows for Garmin R50 parsing"));
 
-        const units = rows[1];
+        const units = rows[0];
         const formattedData = rows.slice(2);
         const firstDateStr = formattedData[0]?.Date;
         let fileDate = null;
