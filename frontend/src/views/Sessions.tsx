@@ -1,25 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  TablePagination,
-  Menu,
-  MenuItem
+  Grid as MuiGrid
 } from '@mui/material';
+import SessionsList from '../components/SessionsList';
+import SessionsUpload from '../components/SessionsUpload';
+const Grid = MuiGrid as any;
 
 interface SessionsProps {
   onSessionLoad: (data: any[], units: Record<string, string>, filename: string, initialTab?: "overview" | "data") => void;
   onSessionListUpdate: (filenames: string[], allClubTypes: string[]) => void;
 }
 
+const dummyFiles = [
+  { name: "session1.csv", status: "queued" },
+  { name: "session2.csv", status: "in progress" },
+  { name: "session3.csv", status: "uploaded" },
+  { name: "session4.csv", status: "skipped" },
+  // { name: "session5.csv", status: "failed" },
+  // { name: "session6.csv", status: "queued" },
+  // { name: "session7.csv", status: "in progress" },
+  // { name: "session8.csv", status: "uploaded" },
+  // { name: "session9.csv", status: "skipped" },
+  // { name: "session10.csv", status: "failed" },
+];
+
 const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate }) => {
+  const [uploadedFiles, setUploadedFiles] = useState(dummyFiles);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const open = Boolean(anchorEl);
@@ -53,84 +59,34 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
     }
   };
 
-  return (
-    <Box sx={{ p: 2 }}>
-      <Paper sx={{ width: 'fit-content', minWidth: 600 }}>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Session</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Shots</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Clubs</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }} align="right">Action</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {sessionData
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((session, index) => (
-                  <TableRow
-                    key={index}
-                    hover
-                  >
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.filename}</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.shots}</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.availableClubs.length}</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }} align="right">
-                      <Box>
-                        <Button
-                          variant="outlined"
-                          onClick={(e) => {
-                            setSelectedSession(session.filename);
-                            setAnchorEl(e.currentTarget);
-                          }}
-                        >
-                          Load
-                        </Button>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component="div"
-          count={sessionData.length}
+    return (
+    <Grid
+      container
+      spacing={2}
+      sx={{
+        p: 2,
+        flex: 1,
+        height: '100%',
+        overflow: 'hidden',
+      }}
+    >
+      <Grid size={6} sx={{ height: '100%' }}>
+        <SessionsList
+          sessionData={sessionData}
           page={page}
-          onPageChange={handleChangePage}
           rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[]}
+          handleLoadSession={handleLoadSession}
+          selectedSession={selectedSession}
+          setSelectedSession={setSelectedSession}
+          anchorEl={anchorEl}
+          setAnchorEl={setAnchorEl}
+          open={open}
         />
-      </Paper>
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={() => setAnchorEl(null)}
-      >
-        <MenuItem
-          onClick={() => {
-            if (selectedSession) {
-              handleLoadSession(selectedSession, "overview");
-            }
-            setAnchorEl(null);
-          }}
-        >
-          Charts
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (selectedSession) {
-              handleLoadSession(selectedSession, "data");
-            }
-            setAnchorEl(null);
-          }}
-        >
-          Data
-        </MenuItem>
-      </Menu>
-    </Box>
+      </Grid>
+      <Grid size={6} sx={{ height: '100%' }}>
+        <SessionsUpload uploadedFiles={uploadedFiles} setUploadedFiles={setUploadedFiles} />
+      </Grid>
+    </Grid>
   );
 };
 
