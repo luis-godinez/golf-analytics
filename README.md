@@ -14,7 +14,7 @@ If not installed, download from [nodejs.org](https://nodejs.org).
 
 ### 1. Clone the repository
 ```
-git clone https://github.com/luis-godinez/golf-analytics.git
+git clone --branch v1 --single-branch https://github.com/luis-godinez/golf-analytics.git
 ```
 
 ### 2. Navigate to the project folder
