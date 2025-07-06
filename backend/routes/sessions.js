@@ -1,6 +1,7 @@
 import express from "express";
 import { computeProgressionSummary } from "../utils/progressionSummary.js";
 import db from "../utils/db.js";
+import { formatSessionDate } from "../utils/formatDate.js";
 
 const router = express.Router();
 
@@ -40,7 +41,8 @@ router.get("/:sessionId", async (req, res) => {
       shots,
       availableClubs: session.availableClubs || [],
       units: session.units,
-      bounds: session.bounds || {}
+      bounds: session.bounds || {},
+      formattedDate: formatSessionDate(session.date)
     });
   } catch (error) {
     console.error("Failed to load session data:", error);

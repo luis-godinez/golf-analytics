@@ -5,7 +5,7 @@ import Progression from "./views/Progression";
 import SessionOverview from "./views/SessionOverview";
 import SessionData from "./views/SessionData";
 
-function SessionDetail({ shotData, units, filename, selectedDevice, availableClubs, bounds, onBack, detailTab, setDetailTab }: any) {
+function SessionDetail({ shotData, units, filename, sessionDate, selectedDevice, availableClubs, bounds, onBack, detailTab, setDetailTab }: any) {
   return (
     <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
@@ -24,7 +24,7 @@ function SessionDetail({ shotData, units, filename, selectedDevice, availableClu
         sx={{ borderBottom: 1, borderColor: 'divider' }}
       >
         <Tab
-          label={units.Date || filename}
+          label={sessionDate}
           disabled
           sx={{
             bgcolor: "primary.main",
@@ -66,6 +66,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [detailTab, setDetailTab] = useState<"overview" | "data">("overview");
+  const [sessionDate, setSessionDate] = useState("");
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
@@ -82,6 +83,7 @@ function App() {
         setFilename(prevFile);
         setBounds(json.bounds || {});
         setAvailableClubs(json.availableClubs || []);
+        setSessionDate(json.formattedDate || "");
       } else if (e.key === "ArrowRight") {
         const nextIndex = (currentIndex + 1) % sessionList.length;
         const nextFile = sessionList[nextIndex];
@@ -92,6 +94,7 @@ function App() {
         setFilename(nextFile);
         setBounds(json.bounds || {});
         setAvailableClubs(json.availableClubs || []);
+        setSessionDate(json.formattedDate || "");
       }
     };
 
@@ -175,7 +178,8 @@ function App() {
               file,
               availableClubs = [],
               bounds = {},
-              initialTab = "overview"
+              initialTab = "overview",
+              date = ""
             ) => {
               setShotData(data);
               setUnits(units);
@@ -183,6 +187,7 @@ function App() {
               setDetailTab(initialTab);
               setAvailableClubs(availableClubs);
               setBounds(bounds);
+              setSessionDate(date);
             }}
             onSessionListUpdate={(ids: string[]) => {
               setSessionList(ids);
@@ -195,6 +200,7 @@ function App() {
             shotData={shotData}
             units={units}
             filename={filename}
+            sessionDate={sessionDate}
             selectedDevice={selectedDevice}
             availableClubs={availableClubs}
             bounds={bounds}

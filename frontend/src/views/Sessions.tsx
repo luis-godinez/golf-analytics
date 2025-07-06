@@ -13,7 +13,8 @@ interface SessionsProps {
     filename: string,
     availableClubs: string[],
     bounds: Record<string, { min: number; max: number }>,
-    initialTab?: "overview" | "data"
+    initialTab?: "overview" | "data",
+    date?: string
   ) => void;
   onSessionListUpdate: (filenames: string[], allClubTypes: string[]) => void;
 }
@@ -68,7 +69,8 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
         sessionId,
         json.availableClubs || [],
         json.bounds || {},
-        initialTab
+        initialTab,
+        json.formattedDate || ""
       );
     } catch (err) {
       console.error("Failed to load session data", err);
