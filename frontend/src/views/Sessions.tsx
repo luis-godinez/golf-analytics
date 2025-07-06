@@ -7,7 +7,14 @@ import SessionsUpload from '../components/SessionsUpload';
 const Grid = MuiGrid as any;
 
 interface SessionsProps {
-  onSessionLoad: (data: any[], units: Record<string, string>, filename: string, initialTab?: "overview" | "data") => void;
+  onSessionLoad: (
+    shots: any[],
+    units: Record<string, string>,
+    filename: string,
+    availableClubs: string[],
+    bounds: Record<string, { min: number; max: number }>,
+    initialTab?: "overview" | "data"
+  ) => void;
   onSessionListUpdate: (filenames: string[], allClubTypes: string[]) => void;
 }
 
@@ -29,36 +36,40 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const open = Boolean(anchorEl);
-  const [page, setPage] = useState(0);
+  const [page] = useState(0);
   const rowsPerPage = 10;
 
-  const [sessionData, setSessionData] = useState<Array<{ date: string; shots: number; availableClubs: string[]; clubData: boolean }>>([]);
+  const [sessionData, setSessionData] = useState<Array<{ id: string; date: string; shots: number; availableClubs: string[]; clubData: boolean }>>([]);
   useEffect(() => {
     fetch("http://localhost:3001/sessions")
       .then(res => res.json())
       .then((data) => {
         setSessionData(data.map((s: any) => ({
+          id: s.id,
           date: s.date,
           shots: s.shots,
           availableClubs: s.availableClubs,
           clubData: s.club_data || false,
         })));
-        const filenames = data.map((s: any) => s.date);
+        const ids = data.map((s: any) => s.id);
         const allClubs: string[] = Array.from(new Set<string>(data.flatMap((s: any) => s.availableClubs)));
-        onSessionListUpdate(filenames, allClubs);
+        onSessionListUpdate(ids, allClubs);
       })
       .catch(err => console.error("Failed to load sessions", err));
   }, [onSessionListUpdate]);
 
-  const handleChangePage = (_: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleLoadSession = async (filename: string, initialTab?: "overview" | "data") => {
+  const handleLoadSession = async (sessionId: string, initialTab?: "overview" | "data") => {
     try {
-      const res = await fetch(`http://localhost:3001/sessions/${filename}`);
+      const res = await fetch(`http://localhost:3001/sessions/${sessionId}`);
       const json = await res.json();
-      onSessionLoad(json.data, json.units || {}, filename, initialTab);
+      onSessionLoad(
+        json.shots,
+        json.units || {},
+        sessionId,
+        json.availableClubs || [],
+        json.bounds || {},
+        initialTab
+      );
     } catch (err) {
       console.error("Failed to load session data", err);
     }

@@ -38,7 +38,9 @@ router.get("/:sessionId", async (req, res) => {
     const shots = db.data.shots.filter(shot => shot.sessionId === sessionId);
     res.json({
       shots,
-      units: session.units
+      availableClubs: session.availableClubs || [],
+      units: session.units,
+      bounds: session.bounds || {}
     });
   } catch (error) {
     console.error("Failed to load session data:", error);

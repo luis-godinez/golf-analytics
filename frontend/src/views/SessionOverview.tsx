@@ -3,43 +3,42 @@ import ScatterPlotComponent from "../components/ScatterPlot";
 import BoxPlotComponent from "../components/BoxPlot";
 import TrajectoriesSideViewComponent from "../components/TrajectoriesSideView";
 import TrajectoriesTopViewComponent from "../components/TrajectoriesTopView";
-import { CLUB_TYPE_ORDER } from "../constants/clubTypes";
 import DataFilter from "../components/DataFilter";
 import { DistanceType, DEFAULT_DISTANCE_TYPE } from "../constants/distanceTypes";
 import { ShotQualityType } from "../constants/shotQualityTypes";
 
 interface OverviewProps {
-  data: any[];
+  shots: any[];
   selectedDeviceType: string;
   units: Record<string, string>;
   filename: string;
+  availableClubs: string[];
+  bounds: Record<string, { min: number; max: number }>;
 }
 
-const SessionOverview: React.FC<OverviewProps> = ({ data, selectedDeviceType, units, filename }) => {
+const SessionOverview: React.FC<OverviewProps> = ({
+  shots,
+  selectedDeviceType,
+  units,
+  filename,
+  availableClubs,
+  bounds
+}) => {
   const [visibleClubTypes, setVisibleClubTypes] = useState<string[]>([]);
   const [availableClubTypes, setAvailableClubTypes] = useState<string[]>([]);
-  const [bounds, setBounds] = useState<Record<string, { min: number; max: number }>>({});
+  const [localBounds, setLocalBounds] = useState<Record<string, { min: number; max: number }>>({});
   const [distanceType, setDistanceType] = useState<DistanceType>(DEFAULT_DISTANCE_TYPE);
   const [shotQualities, setShotQualities] = useState<ShotQualityType[]>(["", "GOOD", "BAD"]);
 
   useEffect(() => {
-    setVisibleClubTypes(CLUB_TYPE_ORDER);
-  }, []);
-
-  useEffect(() => {
-    fetch("http://localhost:3001/sessions/bounds")
-      .then((res) => res.json())
-      .then((json) => {
-        setAvailableClubTypes(json.availableClubs || []);
-        setVisibleClubTypes(json.availableClubs || []);
-        setBounds(json.bounds || {});
-      })
-      .catch((err) => console.error("Failed to load club types", err));
-  }, []);
+    setAvailableClubTypes(availableClubs);
+    setVisibleClubTypes(availableClubs);
+    setLocalBounds(bounds);
+  }, [availableClubs, bounds]);
 
   const showShotQualityToggle = true;
 
-  const filteredData = data.filter((shot) => {
+  const filteredData = (shots ?? []).filter((shot) => {
     const tag = shot.Tag ?? "";
     return shotQualities.includes(tag);
   });
@@ -74,14 +73,14 @@ const SessionOverview: React.FC<OverviewProps> = ({ data, selectedDeviceType, un
         }}
       >
         <div style={{ width: '30vw' }}>
-        <TrajectoriesTopViewComponent data={clubFilteredData} bounds={bounds} distanceType={distanceType} />
+        <TrajectoriesTopViewComponent data={clubFilteredData} bounds={localBounds} distanceType={distanceType} />
         </div>
         <div style={{ width: '30vw'}}>
-          <ScatterPlotComponent data={clubFilteredData} bounds={bounds} distanceType={distanceType} />
+          <ScatterPlotComponent data={clubFilteredData} bounds={localBounds} distanceType={distanceType} />
         </div>
         <div style={{ width: '40vw'}}>
-          <BoxPlotComponent data={clubFilteredData} bounds={bounds} availableClubs={availableClubTypes} distanceType={distanceType}/>
-          <TrajectoriesSideViewComponent data={clubFilteredData} bounds={bounds} />
+          <BoxPlotComponent data={clubFilteredData} bounds={localBounds} availableClubs={availableClubTypes} distanceType={distanceType}/>
+          <TrajectoriesSideViewComponent data={clubFilteredData} bounds={localBounds} />
         </div>
       </div>
     </div>

@@ -15,10 +15,10 @@ import {
 } from '@mui/material';
 
 interface SessionsListProps {
-  sessionData: Array<{ date: string; shots: number; availableClubs: string[]; clubData: boolean }>;
+  sessionData: Array<{ id: string; date: string; shots: number; availableClubs: string[]; clubData: boolean }>;
   page: number;
   rowsPerPage: number;
-  handleLoadSession: (date: string, initialTab?: "overview" | "data") => void;
+  handleLoadSession: (id: string, initialTab?: "overview" | "data") => void;
   selectedSession: string | null;
   setSelectedSession: React.Dispatch<React.SetStateAction<string | null>>;
   anchorEl: null | HTMLElement;
@@ -62,7 +62,7 @@ const SessionsList: React.FC<SessionsListProps> = ({
             {sessionData
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((session, index) => (
-                <TableRow key={index} hover>
+                <TableRow key={session.id || index} hover>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.date}</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.shots}</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.availableClubs.length}</TableCell>
@@ -74,7 +74,7 @@ const SessionsList: React.FC<SessionsListProps> = ({
                       <Button
                         variant="outlined"
                         onClick={(e) => {
-                          setSelectedSession(session.date);
+                          setSelectedSession(session.id);
                           setAnchorEl(e.currentTarget);
                         }}
                       >

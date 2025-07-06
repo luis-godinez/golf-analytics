@@ -5,7 +5,7 @@ import Progression from "./views/Progression";
 import SessionOverview from "./views/SessionOverview";
 import SessionData from "./views/SessionData";
 
-function SessionDetail({ csvData, units, filename, selectedDevice, onBack, detailTab, setDetailTab }: any) {
+function SessionDetail({ shotData, units, filename, selectedDevice, availableClubs, bounds, onBack, detailTab, setDetailTab }: any) {
   return (
     <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
@@ -24,12 +24,12 @@ function SessionDetail({ csvData, units, filename, selectedDevice, onBack, detai
         sx={{ borderBottom: 1, borderColor: 'divider' }}
       >
         <Tab
-          label={filename}
+          label={units.Date || filename}
           disabled
           sx={{
             bgcolor: "primary.main",
             color: "white !important",
-            width: 140,
+            width: 180,
             textTransform: "none",
             fontWeight: "bold",
           }}
@@ -39,10 +39,17 @@ function SessionDetail({ csvData, units, filename, selectedDevice, onBack, detai
       </Tabs>
       <Box sx={{ flexGrow: 1, overflow: "auto", mt: 2 }}>
         {detailTab === "overview" && (
-          <SessionOverview data={csvData} units={units} selectedDeviceType={selectedDevice} filename={filename} />
+          <SessionOverview
+            shots={shotData}
+            units={units}
+            selectedDeviceType={selectedDevice}
+            filename={filename}
+            availableClubs={availableClubs}
+            bounds={bounds}
+          />
         )}
         {detailTab === "data" && (
-          <SessionData data={csvData} units={units} selectedDeviceType={selectedDevice} filename={filename} />
+          <SessionData data={shotData} units={units} selectedDeviceType={selectedDevice} filename={filename} />
         )}
       </Box>
     </Box>
@@ -50,7 +57,7 @@ function SessionDetail({ csvData, units, filename, selectedDevice, onBack, detai
 }
 
 function App() {
-  const [csvData, setCsvData] = useState<any[]>([]);
+  const [shotData, setShotData] = useState<any[]>([]);
   const [units, setUnits] = useState<Record<string, string>>({});
   const [activeMainTab, setActiveMainTab] = useState<"sessions" | "progression">("sessions");
   const [selectedDevice, setSelectedDevice] = useState<"garmin-r50" | "other">("garmin-r50");
@@ -70,17 +77,21 @@ function App() {
         const prevFile = sessionList[prevIndex];
         const res = await fetch(`http://localhost:3001/sessions/${prevFile}`);
         const json = await res.json();
-        setCsvData(json.data);
+        setShotData(json.shots);
         setUnits(json.units || {});
         setFilename(prevFile);
+        setBounds(json.bounds || {});
+        setAvailableClubs(json.availableClubs || []);
       } else if (e.key === "ArrowRight") {
         const nextIndex = (currentIndex + 1) % sessionList.length;
         const nextFile = sessionList[nextIndex];
         const res = await fetch(`http://localhost:3001/sessions/${nextFile}`);
         const json = await res.json();
-        setCsvData(json.data);
+        setShotData(json.shots);
         setUnits(json.units || {});
         setFilename(nextFile);
+        setBounds(json.bounds || {});
+        setAvailableClubs(json.availableClubs || []);
       }
     };
 
@@ -89,6 +100,10 @@ function App() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [filename, sessionList]);
+
+  // Add state for availableClubs and bounds
+  const [availableClubs, setAvailableClubs] = useState<string[]>([]);
+  const [bounds, setBounds] = useState<Record<string, { min: number; max: number }>>({});
 
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
@@ -154,24 +169,35 @@ function App() {
       <Box sx={{ flexGrow: 1, overflow: "auto", display: "flex", flexDirection: "column", p: 2 }}>
         {activeMainTab === "sessions" && !filename && (
           <Sessions
-            onSessionLoad={(data, units, file, initialTab = "overview") => {
-              setCsvData(data);
+            onSessionLoad={(
+              data,
+              units,
+              file,
+              availableClubs = [],
+              bounds = {},
+              initialTab = "overview"
+            ) => {
+              setShotData(data);
               setUnits(units);
               setFilename(file);
               setDetailTab(initialTab);
+              setAvailableClubs(availableClubs);
+              setBounds(bounds);
             }}
-            onSessionListUpdate={(filenames: string[]) => {
-              setSessionList(filenames);
+            onSessionListUpdate={(ids: string[]) => {
+              setSessionList(ids);
             }}
           />
         )}
         {activeMainTab === "progression" && <Progression />}
         {filename && (
           <SessionDetail
-            csvData={csvData}
+            shotData={shotData}
             units={units}
             filename={filename}
             selectedDevice={selectedDevice}
+            availableClubs={availableClubs}
+            bounds={bounds}
             detailTab={detailTab}
             setDetailTab={setDetailTab}
             onBack={() => setFilename("")}
