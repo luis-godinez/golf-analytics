@@ -32,13 +32,18 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
   const [page, setPage] = useState(0);
   const rowsPerPage = 10;
 
-  const [sessionData, setSessionData] = useState<Array<{ filename: string; shots: number; availableClubs: string[] }>>([]);
+  const [sessionData, setSessionData] = useState<Array<{ date: string; shots: number; availableClubs: string[]; clubData: boolean }>>([]);
   useEffect(() => {
     fetch("http://localhost:3001/sessions")
       .then(res => res.json())
       .then((data) => {
-        setSessionData(data);
-        const filenames = data.map((s: any) => s.filename);
+        setSessionData(data.map((s: any) => ({
+          date: s.date,
+          shots: s.shots,
+          availableClubs: s.availableClubs,
+          clubData: s.club_data || false,
+        })));
+        const filenames = data.map((s: any) => s.date);
         const allClubs: string[] = Array.from(new Set<string>(data.flatMap((s: any) => s.availableClubs)));
         onSessionListUpdate(filenames, allClubs);
       })

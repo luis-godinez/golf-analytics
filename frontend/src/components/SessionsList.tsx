@@ -11,13 +11,14 @@ import {
   Paper,
   Menu,
   MenuItem,
+  Checkbox,
 } from '@mui/material';
 
 interface SessionsListProps {
-  sessionData: Array<{ filename: string; shots: number; availableClubs: string[] }>;
+  sessionData: Array<{ date: string; shots: number; availableClubs: string[]; clubData: boolean }>;
   page: number;
   rowsPerPage: number;
-  handleLoadSession: (filename: string, initialTab?: "overview" | "data") => void;
+  handleLoadSession: (date: string, initialTab?: "overview" | "data") => void;
   selectedSession: string | null;
   setSelectedSession: React.Dispatch<React.SetStateAction<string | null>>;
   anchorEl: null | HTMLElement;
@@ -53,6 +54,7 @@ const SessionsList: React.FC<SessionsListProps> = ({
               <TableCell sx={{ whiteSpace: 'nowrap' }}>Session</TableCell>
               <TableCell sx={{ whiteSpace: 'nowrap' }}>Shots</TableCell>
               <TableCell sx={{ whiteSpace: 'nowrap' }}>Clubs</TableCell>
+              <TableCell sx={{ whiteSpace: 'nowrap' }}>Club Data</TableCell>
               <TableCell sx={{ whiteSpace: 'nowrap' }} align="right">Action</TableCell>
             </TableRow>
           </TableHead>
@@ -61,15 +63,18 @@ const SessionsList: React.FC<SessionsListProps> = ({
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((session, index) => (
                 <TableRow key={index} hover>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.filename}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.date}</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.shots}</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{session.availableClubs.length}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    <Checkbox checked={session.clubData} disabled />
+                  </TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }} align="right">
                     <Box>
                       <Button
                         variant="outlined"
                         onClick={(e) => {
-                          setSelectedSession(session.filename);
+                          setSelectedSession(session.date);
                           setAnchorEl(e.currentTarget);
                         }}
                       >
