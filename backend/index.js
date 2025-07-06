@@ -1,10 +1,3 @@
-export const allowlist = [
-  "Club Speed", "Attack Angle", "Club Path", "Club Face", "Face to Path",
-  "Ball Speed", "Smash Factor", "Launch Angle", "Launch Direction", "Backspin",
-  "Sidespin", "Spin Rate", "Spin Axis", "Apex Height", "Carry Distance",
-  "Carry Deviation Angle", "Carry Deviation Distance", "Total Distance",
-  "Total Deviation Angle", "Total Deviation Distance"
-];
 import express from "express";
 import cors from "cors";
 import sessionsRouter from "./routes/sessions.js";
@@ -13,14 +6,9 @@ import path from "path";
 import { parseGarminR50Csv } from "./utils/parseCsv.js";
 import db, { initDB } from "./utils/db.js";
 import { v4 as uuidv4 } from "uuid";
-import crypto from "crypto";
-
-function calculateFileHash(filePath) {
-  const fileBuffer = fs.readFileSync(filePath);
-  const hashSum = crypto.createHash("sha256");
-  hashSum.update(fileBuffer);
-  return hashSum.digest("hex");
-}
+import { calculateFileHash } from "./utils/fileHash.js";
+import { boundsAllowlist } from "./constants/allowlist.js";
+import { calculateSessionBounds } from "./utils/sessionBounds.js";
 
 const app = express();
 app.use(cors());
@@ -71,20 +59,7 @@ app.use("/sessions", sessionsRouter);
     const sessionId = uuidv4();
     const firstShotTimestamp = result.fileDate;
 
-    const sessionBounds = {};
-    for (const shot of result.data) {
-      for (const [key, value] of Object.entries(shot)) {
-        if (!allowlist.includes(key)) continue;
-        if (!value || isNaN(parseFloat(value))) continue;
-        const num = parseFloat(value);
-        if (!(key in sessionBounds)) {
-          sessionBounds[key] = { min: num, max: num };
-        } else {
-          sessionBounds[key].min = Math.min(sessionBounds[key].min, num);
-          sessionBounds[key].max = Math.max(sessionBounds[key].max, num);
-        }
-      }
-    }
+    const sessionBounds = calculateSessionBounds(result.data, boundsAllowlist);
 
     // Save session metadata, including club_data and bounds
     db.data.sessions.push({
