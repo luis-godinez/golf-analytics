@@ -152,7 +152,10 @@ const AreaChart: React.FC<AreaChartProps> = ({ defaultMetric, visibleClubTypes, 
       .style("pointer-events", "all")
       .on("mousemove", (event) => {
         const [mx] = d3.pointer(event);
-        const closestDate = x.domain().reduce((a, b) => {
+        const currentDomain = x.domain();
+        if (currentDomain.length === 0) return;
+
+        const closestDate = currentDomain.reduce((a, b) => {
           return Math.abs(x(b)! - mx) < Math.abs(x(a)! - mx) ? b : a;
         });
         if (closestDate !== hoveredDate) {
