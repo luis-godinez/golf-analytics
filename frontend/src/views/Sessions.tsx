@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Grid as MuiGrid
 } from '@mui/material';
@@ -19,21 +19,8 @@ interface SessionsProps {
   onSessionListUpdate: (filenames: string[], allClubTypes: string[]) => void;
 }
 
-const dummyFiles = [
-  { name: "session1.csv", status: "queued" },
-  { name: "session2.csv", status: "in progress" },
-  { name: "session3.csv", status: "uploaded" },
-  { name: "session4.csv", status: "skipped" },
-  // { name: "session5.csv", status: "failed" },
-  // { name: "session6.csv", status: "queued" },
-  // { name: "session7.csv", status: "in progress" },
-  // { name: "session8.csv", status: "uploaded" },
-  // { name: "session9.csv", status: "skipped" },
-  // { name: "session10.csv", status: "failed" },
-];
-
 const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate }) => {
-  const [uploadedFiles, setUploadedFiles] = useState(dummyFiles);
+  const [uploadedFiles, setUploadedFiles] = useState<{ id: string; name: string; status: string }[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const open = Boolean(anchorEl);
@@ -41,7 +28,8 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
   const rowsPerPage = 10;
 
   const [sessionData, setSessionData] = useState<Array<{ id: string; date: string; shots: number; availableClubs: string[]; clubData: boolean }>>([]);
-  useEffect(() => {
+  // Fetch session list and update state
+  const fetchSessionList = useCallback(() => {
     fetch("http://localhost:3001/sessions")
       .then(res => res.json())
       .then((data) => {
@@ -58,6 +46,10 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
       })
       .catch(err => console.error("Failed to load sessions", err));
   }, [onSessionListUpdate]);
+
+  useEffect(() => {
+    fetchSessionList();
+  }, [fetchSessionList]);
 
   const handleLoadSession = async (sessionId: string, initialTab?: "overview" | "data") => {
     try {
@@ -77,6 +69,64 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
     }
   };
 
+  const handleFilesSelected = (files: File[]) => {
+    const newFiles = files.map((f) => ({
+      id: crypto.randomUUID(),
+      name: f.name,
+      status: 'in progress',
+    }));
+    setUploadedFiles((prev) => [...prev, ...newFiles]);
+
+    files.forEach((file, idx) => {
+      const fileObj = newFiles[idx];
+      uploadFile(fileObj, file);
+    });
+  };
+
+  const uploadFile = async (fileObj: { id: string; name: string; status: string }, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("http://localhost:3001/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (json.duplicate) {
+        setUploadedFiles((prev) =>
+          prev.map((f) =>
+            f.id === fileObj.id ? { ...f, status: "skipping duplicate" } : f
+          )
+        );
+        return;
+      }
+
+      if (res.ok) {
+        setUploadedFiles((prev) =>
+          prev.map((f) =>
+            f.id === fileObj.id ? { ...f, status: "uploaded" } : f
+          )
+        );
+        fetchSessionList();
+      } else {
+        setUploadedFiles((prev) =>
+          prev.map((f) =>
+            f.id === fileObj.id ? { ...f, status: "failed" } : f
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Upload failed", error);
+      setUploadedFiles((prev) =>
+        prev.map((f) =>
+          f.id === fileObj.id ? { ...f, status: "failed" } : f
+        )
+      );
+    }
+  };
+
     return (
     <Grid
       container
@@ -91,18 +141,26 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
       <Grid size={6} sx={{ height: '100%' }}>
         <SessionsList
           sessionData={sessionData}
-          page={page}
-          rowsPerPage={rowsPerPage}
           handleLoadSession={handleLoadSession}
           selectedSession={selectedSession}
           setSelectedSession={setSelectedSession}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
           open={open}
+          onDeleteSession={async (sessionId: string) => {
+            await fetch(`http://localhost:3001/sessions/${sessionId}`, {
+              method: "DELETE",
+            });
+            fetchSessionList();
+          }}
         />
       </Grid>
       <Grid size={6} sx={{ height: '100%' }}>
-        <SessionsUpload uploadedFiles={uploadedFiles} setUploadedFiles={setUploadedFiles} />
+        <SessionsUpload
+          uploadedFiles={uploadedFiles}
+          setUploadedFiles={setUploadedFiles}
+          onFilesSelected={handleFilesSelected}
+        />
       </Grid>
     </Grid>
   );

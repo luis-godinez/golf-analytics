@@ -4,17 +4,18 @@
 
 ## Getting Started
 
-Before you begin, make sure you have [Node.js](https://nodejs.org/) installed (includes `npm`).  
-To check, run:
-```
-node -v
-npm -v
-```
-If not installed, download from [nodejs.org](https://nodejs.org).
+Before you begin, make sure you have [Node.js](https://nodejs.org/) installed (includes `npm`).
+  
+  Use the following command to verify installation:
+  ```
+  node -v
+  npm -v
+  ```
+
 
 ### 1. Clone the repository
 ```
-git clone --branch v1 --single-branch https://github.com/luis-godinez/golf-analytics.git
+git clone https://github.com/luis-godinez/golf-analytics.git
 ```
 
 ### 2. Navigate to the project folder
@@ -27,25 +28,19 @@ cd golf-analytics
 npm run install:all
 ```
 
-### 4. Add Garmin CSV files
-Place your exported Garmin R50 CSV files in the `/CSVs` directory.
+### 4. Start the server
+- This will launch the application at `http://localhost:3000`.
+```
+npm start
+```
 
-To export these files:
+### 5. Download CSV files from Golf App
 - Open a practice session in the Garmin Golf App.
 - Tap the three dots in the upper right corner and select **Export to CSV**.
 - Share the file to your computer via email or AirDrop.
 
-**Notes:**
-- The database is updated at server startup.
-- Adding files after starting the server requires an app restart to refresh sessions (planned to improve in future updates).
-- Sessions are ordered by filename. For simple ordering, use a naming format like `YY-MM-DD.csv` (e.g., `24-09-15.csv`).
-
-### 5. Start the development server
-```
-npm start
-```
-The app will open at `http://localhost:3000`.
-
+### 6. Upload your golf shot data
+- Use the drag-n-drop utility or the file selector to import one of more CSVs.
 
 ## Dashboard Capabilities
 

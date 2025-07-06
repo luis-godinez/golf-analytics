@@ -50,4 +50,15 @@ router.get("/:sessionId", async (req, res) => {
   }
 });
 
+router.delete("/:sessionId", async (req, res) => {
+  const { sessionId } = req.params;
+
+  await db.read();
+  db.data.shots = db.data.shots.filter(shot => shot.sessionId !== sessionId);
+  db.data.sessions = db.data.sessions.filter(session => session.id !== sessionId);
+
+  await db.write();
+  res.status(200).json({ message: "Session and related shots deleted." });
+});
+
 export default router;

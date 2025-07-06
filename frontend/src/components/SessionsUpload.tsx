@@ -9,6 +9,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 
 interface UploadFile {
+  id: string;
   name: string;
   status: string;
 }
@@ -16,9 +17,14 @@ interface UploadFile {
 interface SessionsUploadProps {
   uploadedFiles: UploadFile[];
   setUploadedFiles: React.Dispatch<React.SetStateAction<UploadFile[]>>;
+  onFilesSelected: (files: File[]) => void;
 }
 
-const SessionsUpload: React.FC<SessionsUploadProps> = ({ uploadedFiles, setUploadedFiles }) => {
+const SessionsUpload: React.FC<SessionsUploadProps> = ({ uploadedFiles, setUploadedFiles, onFilesSelected }) => {
+  const handleFiles = (files: File[]) => {
+    onFilesSelected(files);
+  };
+
   return (
     <Paper
       variant="outlined"
@@ -57,11 +63,7 @@ const SessionsUpload: React.FC<SessionsUploadProps> = ({ uploadedFiles, setUploa
           e.preventDefault();
           e.stopPropagation();
           const files = Array.from(e.dataTransfer.files);
-          const newFiles = files.map((f: File) => ({
-            name: f.name,
-            status: 'in progress',
-          }));
-          setUploadedFiles((prev) => [...prev, ...newFiles]);
+          handleFiles(files);
         }}
         onClick={() => {
           const input = document.createElement('input');
@@ -69,11 +71,7 @@ const SessionsUpload: React.FC<SessionsUploadProps> = ({ uploadedFiles, setUploa
           input.multiple = true;
           input.onchange = (e: any) => {
             const files: File[] = Array.from(e.target.files as FileList);
-            const newFiles = files.map((f) => ({
-              name: f.name,
-              status: 'in progress',
-            }));
-            setUploadedFiles((prev) => [...prev, ...newFiles]);
+            handleFiles(files);
           };
           input.click();
         }}
@@ -111,10 +109,9 @@ const SessionsUpload: React.FC<SessionsUploadProps> = ({ uploadedFiles, setUploa
       >
         {[...uploadedFiles].reverse().map((file, idx) => {
           let severity: 'info' | 'warning' | 'error' | 'success' = 'info';
-          if (file.status === 'queued') severity = 'info';
-          else if (file.status === 'in progress') severity = 'warning';
+          if (file.status === 'in progress') severity = 'warning';
           else if (file.status === 'uploaded') severity = 'success';
-          else if (file.status === 'skipped') severity = 'warning';
+          else if (file.status === 'skipping duplicate') severity = 'warning';
           else if (file.status === 'failed') severity = 'error';
 
           return (
