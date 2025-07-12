@@ -4,12 +4,7 @@ import sessionsRouter from "./routes/sessions.js";
 import uploadRouter from "./routes/upload.js";
 import fs from "fs";
 import path from "path";
-import { parseGarminR50Csv } from "./utils/parseCsv.js";
 import db, { initDB } from "./utils/db.js";
-import { v4 as uuidv4 } from "uuid";
-import { calculateFileHash } from "./utils/fileHash.js";
-import { boundsAllowlist } from "./constants/allowlist.js";
-import { calculateSessionBounds } from "./utils/sessionBounds.js";
 import { Mutex } from "async-mutex";
 
 const dbMutex = new Mutex();

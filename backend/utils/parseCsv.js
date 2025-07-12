@@ -28,7 +28,6 @@ export function parseGarminR50Csv(filePath) {
 
         // Detect club data
         let clubDataCount = 0;
-        let totalRows = formattedData.length;
         for (const row of formattedData) {
           const clubSpeed = row['Club Speed'] || row['club speed'] || row['clubSpeed'];
           if (clubSpeed && clubSpeed.trim() !== '') {

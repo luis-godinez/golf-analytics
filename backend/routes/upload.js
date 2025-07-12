@@ -1,6 +1,5 @@
 import express from "express";
 import multer from "multer";
-import path from "path";
 import fs from "fs";
 import { parseGarminR50Csv } from "../utils/parseCsv.js";
 import db from "../utils/db.js";
