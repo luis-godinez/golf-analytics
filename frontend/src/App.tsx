@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { Drawer, List, ListItemButton, ListItemText, Box, Tabs, Tab, Typography, Button, Popover, Paper, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio } from "@mui/material";
 import Sessions from "./views/Sessions";
 import Progression from "./views/Progression";
-import SessionOverview from "./views/SessionOverview";
-import SessionData from "./views/SessionData";
+import SessionCharts from "./views/SessionCharts";
+import SessionDataTable from "./views/SessionDataTable";
 
 function SessionDetail({ shotData, units, filename, sessionDate, selectedDevice, availableClubs, bounds, onBack, detailTab, setDetailTab }: any) {
   return (
@@ -34,12 +34,12 @@ function SessionDetail({ shotData, units, filename, sessionDate, selectedDevice,
             fontWeight: "bold",
           }}
         />
-        <Tab label="Overview" value="overview" />
-        <Tab label="Data" value="data" />
+        <Tab label="Charts" value="charts" />
+        <Tab label="Data Table" value="table" />
       </Tabs>
       <Box sx={{ flexGrow: 1, overflow: "auto", mt: 2 }}>
-        {detailTab === "overview" && (
-          <SessionOverview
+        {detailTab === "charts" && (
+          <SessionCharts
             shots={shotData}
             units={units}
             selectedDeviceType={selectedDevice}
@@ -48,8 +48,8 @@ function SessionDetail({ shotData, units, filename, sessionDate, selectedDevice,
             bounds={bounds}
           />
         )}
-        {detailTab === "data" && (
-          <SessionData data={shotData} units={units} selectedDeviceType={selectedDevice} filename={filename} />
+        {detailTab === "table" && (
+          <SessionDataTable data={shotData} units={units} selectedDeviceType={selectedDevice} filename={filename} />
         )}
       </Box>
     </Box>
@@ -65,7 +65,7 @@ function App() {
   const [sessionList, setSessionList] = useState<string[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [detailTab, setDetailTab] = useState<"overview" | "data">("overview");
+  const [detailTab, setDetailTab] = useState<"charts" | "table">("charts");
   const [sessionDate, setSessionDate] = useState("");
 
   useEffect(() => {
@@ -178,7 +178,7 @@ function App() {
               file,
               availableClubs = [],
               bounds = {},
-              initialTab = "overview",
+              initialTab = "charts",
               date = ""
             ) => {
               setShotData(data);

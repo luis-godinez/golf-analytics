@@ -19,7 +19,7 @@ import IconButton from '@mui/material/IconButton';
 
 interface SessionsListProps {
   sessionData: Array<{ id: string; date: string; shots: number; availableClubs: string[]; clubData: boolean }>;
-  handleLoadSession: (id: string, initialTab?: "overview" | "data") => void;
+  handleLoadSession: (id: string, initialTab?: "charts" | "table") => void;
   selectedSession: string | null;
   setSelectedSession: React.Dispatch<React.SetStateAction<string | null>>;
   anchorEl: null | HTMLElement;
@@ -165,7 +165,7 @@ const SessionsList: React.FC<SessionsListProps> = ({
         <MenuItem
           onClick={() => {
             if (selectedSession) {
-              handleLoadSession(selectedSession, "overview");
+              handleLoadSession(selectedSession, "charts");
             }
             setAnchorEl(null);
           }}
@@ -175,12 +175,12 @@ const SessionsList: React.FC<SessionsListProps> = ({
         <MenuItem
           onClick={() => {
             if (selectedSession) {
-              handleLoadSession(selectedSession, "data");
+              handleLoadSession(selectedSession, "table");
             }
             setAnchorEl(null);
           }}
         >
-          Data
+          Data Table
         </MenuItem>
       </Menu>
     </Paper>
