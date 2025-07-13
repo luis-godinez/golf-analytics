@@ -13,7 +13,7 @@
   "author": "",
   "license": "ISC",
   "description": "",
-  "devDependencies": {
+  "dependencies": {
     "concurrently": "^9.2.0",
     "nodemon": "^3.1.10"
   }
