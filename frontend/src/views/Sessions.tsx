@@ -13,7 +13,7 @@ interface SessionsProps {
     filename: string,
     availableClubs: string[],
     bounds: Record<string, { min: number; max: number }>,
-    initialTab?: "overview" | "data",
+    initialTab?: "charts" | "table",
     date?: string
   ) => void;
   onSessionListUpdate: (filenames: string[], allClubTypes: string[]) => void;
@@ -27,13 +27,13 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
   const [page] = useState(0);
   const rowsPerPage = 10;
 
-  const [sessionData, setSessionData] = useState<Array<{ id: string; date: string; shots: number; availableClubs: string[]; clubData: boolean }>>([]);
+  const [sessionData, setSessionDataTable] = useState<Array<{ id: string; date: string; shots: number; availableClubs: string[]; clubData: boolean }>>([]);
   // Fetch session list and update state
   const fetchSessionList = useCallback(() => {
     fetch("http://localhost:3001/sessions")
       .then(res => res.json())
       .then((data) => {
-        setSessionData(data.map((s: any) => ({
+        setSessionDataTable(data.map((s: any) => ({
           id: s.id,
           date: s.date,
           shots: s.shots,
@@ -51,7 +51,7 @@ const Sessions: React.FC<SessionsProps> = ({ onSessionLoad, onSessionListUpdate 
     fetchSessionList();
   }, [fetchSessionList]);
 
-  const handleLoadSession = async (sessionId: string, initialTab?: "overview" | "data") => {
+  const handleLoadSession = async (sessionId: string, initialTab?: "charts" | "table") => {
     try {
       const res = await fetch(`http://localhost:3001/sessions/${sessionId}`);
       const json = await res.json();

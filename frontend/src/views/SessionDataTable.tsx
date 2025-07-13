@@ -2,14 +2,14 @@ import React from "react";
 import TableComponent from "../components/Table";
 import { Box, Typography } from "@mui/material";
 
-interface SessionDataProps {
+interface SessionDataTableProps {
   data: any[];
   units: Record<string, string>;
   selectedDeviceType: "other" | "garmin-r50";
   filename: string;
 }
 
-const SessionData: React.FC<SessionDataProps> = ({ data, units, selectedDeviceType, filename }) => {
+const SessionDataTable: React.FC<SessionDataTableProps> = ({ data, units, selectedDeviceType, filename }) => {
   if (!data || data.length === 0) {
     return <Typography variant="body1">No shot data available.</Typography>;
   }
@@ -21,4 +21,4 @@ const SessionData: React.FC<SessionDataProps> = ({ data, units, selectedDeviceTy
   );
 };
 
-export default SessionData;
+export default SessionDataTable;

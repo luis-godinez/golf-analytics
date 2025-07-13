@@ -23,7 +23,6 @@ router.post("/", upload.single("file"), async (req, res) => {
 
     const signature = calculateFileHash(filePath);
     console.log(`➡️ Processing: ${req.file.originalname}`);
-    console.log(`🔑 File hash: ${signature}`);
 
     const existingSession = db.data.sessions.find(session => session.signature === signature);
     if (existingSession) {

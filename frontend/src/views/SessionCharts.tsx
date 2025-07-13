@@ -16,7 +16,7 @@ interface OverviewProps {
   bounds: Record<string, { min: number; max: number }>;
 }
 
-const SessionOverview: React.FC<OverviewProps> = ({
+const SessionCharts: React.FC<OverviewProps> = ({
   shots,
   selectedDeviceType,
   units,
@@ -87,4 +87,4 @@ const SessionOverview: React.FC<OverviewProps> = ({
   );
 };
 
-export default SessionOverview;
+export default SessionCharts;
